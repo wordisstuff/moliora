@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/context/themeContext';
 import Menu from '@/components/Menu/Menu';
+import { cookies } from 'next/headers';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -24,8 +25,14 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const themeCookie = cookies().get('theme')?.value as
+        | 'light'
+        | 'dark'
+        | undefined;
+    const initialTheme = themeCookie ?? 'light';
+
     return (
-        <html lang="en">
+        <html lang="en" className={initialTheme}>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} container mx-auto antialiased`}
             >

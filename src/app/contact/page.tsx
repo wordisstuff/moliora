@@ -64,7 +64,12 @@ export default function ContactPage() {
                 {/* Left: form */}
                 <form
                     ref={formRef}
-                    action={handleSubmit}
+                    // action={handleSubmit}
+                    onSubmit={e => {
+                        e.preventDefault();
+                        const fd = new FormData(e.currentTarget);
+                        handleSubmit(fd);
+                    }}
                     method="POST"
                     className="md:col-span-2 bg-white/60 dark:bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-[color:var(--foreground)]/15"
                 >
