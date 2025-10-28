@@ -123,9 +123,9 @@ export default function Footer() {
                             <span className="opacity-70">Email:</span>{' '}
                             <a
                                 className="hover:underline underline-offset-2"
-                                href="mailto:wordisstuff@gmail.com"
+                                href="mailto:support@moliora.us"
                             >
-                                wordisstuff@gmail.com
+                                support@moliora.us
                             </a>
                         </li>
                         <li>

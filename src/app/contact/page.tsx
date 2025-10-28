@@ -260,9 +260,9 @@ export default function ContactPage() {
                                 <span className="opacity-70">Email:</span>{' '}
                                 <a
                                     className="underline-offset-2 hover:underline"
-                                    href="mailto:wordisstuff@gmail.com"
+                                    href="mailto:support@moliora.us"
                                 >
-                                    wordisstuff@gmail.com
+                                    support@moliora.us
                                 </a>
                             </li>
                             <li>

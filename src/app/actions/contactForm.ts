@@ -1,27 +1,46 @@
+
 // app/actions/contactForm.ts
 'use server';
 
 import nodemailer from 'nodemailer';
+import {htmlTemplate} from '../constants/index.js'
 
-/** Допоміжне: безпечні підстановки у шаблон */
+/** ───── helpers ───── */
 function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] as string));
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 }
 function nl2br(s: string) { return s.replace(/\n/g, '<br>'); }
 function render(tpl: string, vars: Record<string, string>) {
-  return tpl.replace(/{{(\w+)}}/g, (_, k) => vars[k] ?? '');
+  return tpl.replace(/{{(\w+)}}/g, (_, k) => (vars[k] ?? ''));
 }
 
-/** Транспортер (Gmail через App Password) */
+/** ───── SMTP (Brevo) ─────
+ * Усі значення беремо з .env:
+ *  - SMTP_HOST (наприклад, smtp-relay.brevo.com)
+ *  - SMTP_PORT (587 або 465)
+ *  - SMTP_SECURE ("true" для 465, інакше "false")
+ *  - SMTP_USER (SMTP key user з Brevo)
+ *  - SMTP_PASS (SMTP key/password з Brevo)
+ */
 function makeTransport() {
   return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    // додатково (корисно для деяких провайдерів)
+    tls: { rejectUnauthorized: true },
+    connectionTimeout: 20_000, // 20s
+    socketTimeout: 30_000,     // 30s
   });
 }
 
+/** ───── main action ───── */
 export async function submitContactForm(formData: FormData) {
-  // 1) Зчитуємо поля
+  // 1) read fields
   const name     = String(formData.get('name')      ?? '');
   const email    = String(formData.get('email')     ?? '');
   const phone    = String(formData.get('phone')     ?? '');
@@ -30,12 +49,12 @@ export async function submitContactForm(formData: FormData) {
   const budget   = String(formData.get('budget')    ?? '');
   const message  = String(formData.get('message')   ?? '');
 
-  // 2) Базова валідація
+  // 2) validate
   if (!name || !email || !message) {
     return { success: false, error: 'Required fields missing' };
   }
 
-  // 3) Підготовка змінних для шаблонів
+  // 3) template vars
   const vars = {
     name: escapeHtml(name),
     email: escapeHtml(email),
@@ -47,137 +66,221 @@ export async function submitContactForm(formData: FormData) {
     year: String(new Date().getFullYear()),
   };
 
-  const htmlAdmin  = render(ADMIN_HTML,  vars);
-  const textAdmin  = render(ADMIN_TEXT,  { ...vars, message: message }); // у тексті — без <br>
-  const htmlClient = render(CLIENT_HTML, vars);
+  const htmlAdmin  = render(htmlTemplate.admin.html,  vars);
+  const textAdmin  = render(htmlTemplate.admin.text,  { ...vars, message });
+  const htmlClient = render(htmlTemplate.client, vars);
 
-  // 4) Відправка
-  const transporter = makeTransport();
+  // 4) send
+  try {
+    const transporter = makeTransport();
 
-  // тобі (адміну)
-  await transporter.sendMail({
-    from:    `"mOliora Contact" <${process.env.SMTP_USER}>`,
-    to:      'wordisstuff@gmail.com',
-    replyTo: email || undefined,
-    subject: `New request from ${name} • ${service || 'Home Services'}`,
-    text:    textAdmin,
-    html:    htmlAdmin,
-  });
+    // лист адміну
+    await transporter.sendMail({
+      from:    `"mOliora Contact" <${process.env.MAIL_FROM ?? process.env.SMTP_USER}>`,
+      to:      [process.env.ADMIN_TO,process.env.ADMIN_TO1,process.env.ADMIN_TO2].join(',') ?? 'wordisstuff@gmail.com',
+      replyTo: email || undefined,
+      subject: `New request from ${name} • ${service || 'Home Services'}`,
+      text:    textAdmin,
+      html:    htmlAdmin,
+    });
 
-  // клієнту (підтвердження)
-  await transporter.sendMail({
-    from:    `"mOliora Home Services" <${process.env.SMTP_USER}>`,
-    to:      email,
-    subject: 'We received your request',
-    html:    htmlClient, // 👈 ВАЖЛИВО: параметр називається html, НЕ htmlClient
-  });
+    // підтвердження клієнту
+    await transporter.sendMail({
+      from:    `"mOliora Home Services" <${process.env.MAIL_FROM ?? process.env.SMTP_USER}>`,
+      to:      email,
+      subject: 'We received your request',
+      html:    htmlClient,
+    });
 
-  return { success: true };
+    return { success: true };
+  } catch (err: any) {
+    console.error('Mail send error:', err);
+    // Порада в проді: логувати у свій логгер/обсервабіліті
+    return { success: false, error: 'Failed to send email. Please try again later.' };
+  }
 }
 
-/* ================== ШАБЛОНИ ================== */
 
-/** Лист тобі (адміну), HTML */
-const ADMIN_HTML = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>New Contact Request</title></head>
-<body style="margin:0;padding:0;background:#f5e8d9;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5e8d9;">
-    <tr><td align="center" style="padding:24px;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e9dac8;">
-        <tr><td style="background:#f5e8d9;padding:24px;text-align:center;border-bottom:1px solid #e9dac8;">
-          <div style="font-family:Georgia,serif;font-size:28px;color:#3f3a2e;">
-            <span style="font-weight:600;">m</span><span style="font-weight:700;">O</span>liora
-          </div>
-          <div style="font-family:Arial,Helvetica,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#3f3a2e;opacity:.8;font-size:12px;margin-top:6px;">Home Services</div>
-        </td></tr>
-        <tr><td style="padding:24px 24px 8px 24px;">
-          <h1 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#3f3a2e;">New Contact Request</h1>
-          <p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.8;font-size:14px;">A new message came in from your website contact form.</p>
-        </td></tr>
-        <tr><td style="padding:8px 24px 16px 24px;">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf6ee;border:1px solid #e9dac8;border-radius:10px;">
-            <tr><td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;font-size:14px;">
-              <strong style="display:inline-block;width:110px;">Name:</strong> {{name}}<br>
-              <strong style="display:inline-block;width:110px;">Email:</strong> {{email}}<br>
-              <strong style="display:inline-block;width:110px;">Phone:</strong> {{phone}}<br>
-              <strong style="display:inline-block;width:110px;">City / ZIP:</strong> {{location}}<br>
-              <strong style="display:inline-block;width:110px;">Service:</strong> {{service}}<br>
-              <strong style="display:inline-block;width:110px;">Budget:</strong> {{budget}}
-            </td></tr>
-          </table>
-        </td></tr>
-        <tr><td style="padding:0 24px 8px 24px;">
-          <h2 style="margin:0 0 6px 0;font-family:Georgia,serif;font-size:18px;color:#3f3a2e;">Message</h2>
-          <div style="font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;background:#fff;border:1px solid #e9dac8;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;">{{message}}</div>
-        </td></tr>
-        <tr><td style="padding:16px 24px 24px 24px;text-align:center;">
-          <a href="mailto:{{email}}" style="display:inline-block;background:#3f3a2e;color:#f5e8d9;text-decoration:none;padding:12px 18px;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;">Reply to {{name}}</a>
-        </td></tr>
-        <tr><td style="background:#f5e8d9;padding:14px 24px;text-align:center;border-top:1px solid #e9dac8;">
-          <p style="margin:0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.7;font-size:12px;">© {{year}} mOliora Home Services • Minneapolis–St. Paul, MN</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`;
+// // app/actions/contactForm.ts
+// 'use server';
 
-/** Лист тобі (адміну), текстова версія (fallback) */
-const ADMIN_TEXT = `
-New Contact Request
+// import nodemailer from 'nodemailer';
 
-Name: {{name}}
-Email: {{email}}
-Phone: {{phone}}
-City / ZIP: {{location}}
-Service: {{service}}
-Budget: {{budget}}
+// /** Допоміжне: безпечні підстановки у шаблон */
+// function escapeHtml(s: string) {
+//   return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] as string));
+// }
+// function nl2br(s: string) { return s.replace(/\n/g, '<br>'); }
+// function render(tpl: string, vars: Record<string, string>) {
+//   return tpl.replace(/{{(\w+)}}/g, (_, k) => vars[k] ?? '');
+// }
 
-Message:
-{{message}}
-`.trim();
+// /** Транспортер (Gmail через App Password) */
+// function makeTransport() {
+//   return nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+//   });
+// }
 
-/** Лист клієнту (підтвердження), HTML */
-const CLIENT_HTML = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thank you from mOliora</title></head>
-<body style="margin:0;padding:0;background:#f5e8d9;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5e8d9;">
-    <tr><td align="center" style="padding:24px;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e9dac8;">
-        <tr><td style="background:#f5e8d9;padding:24px;text-align:center;border-bottom:1px solid #e9dac8;">
-          <div style="font-family:Georgia,serif;font-size:28px;color:#3f3a2e;">
-            <span style="font-weight:600;">m</span><span style="font-weight:700;">O</span>liora
-          </div>
-          <div style="font-family:Arial,Helvetica,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#3f3a2e;opacity:.8;font-size:12px;margin-top:6px;">Home Services</div>
-        </td></tr>
-        <tr><td style="padding:24px;">
-          <h1 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#3f3a2e;">Thank you, {{name}}!</h1>
-          <p style="margin:12px 0 20px 0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.9;font-size:15px;line-height:1.6;">
-            We’ve received your message and our team will get back to you within one business day.
-            Below is a copy of your request for your records.
-          </p>
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf6ee;border:1px solid #e9dac8;border-radius:10px;">
-            <tr><td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;font-size:14px;">
-              <strong style="display:inline-block;width:110px;">Service:</strong> {{service}}<br>
-              <strong style="display:inline-block;width:110px;">Budget:</strong> {{budget}}<br>
-              <strong style="display:inline-block;width:110px;">City / ZIP:</strong> {{location}}<br>
-              <strong style="display:inline-block;width:110px;">Phone:</strong> {{phone}}
-            </td></tr>
-          </table>
-          <h2 style="margin:24px 0 8px 0;font-family:Georgia,serif;font-size:18px;color:#3f3a2e;">Your Message</h2>
-          <div style="font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;border:1px solid #e9dac8;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;">{{message}}</div>
-          <p style="margin-top:32px;text-align:center;">
-            <a href="mailto:wordisstuff@gmail.com" style="background:#3f3a2e;color:#f5e8d9;text-decoration:none;padding:12px 22px;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;">Contact mOliora Support</a>
-          </p>
-        </td></tr>
-        <tr><td style="background:#f5e8d9;padding:14px;text-align:center;border-top:1px solid #e9dac8;">
-          <p style="margin:0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.7;font-size:12px;">© {{year}} mOliora Home Services • Minneapolis–St. Paul, MN</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`;
+// export async function submitContactForm(formData: FormData) {
+//   // 1) Зчитуємо поля
+//   const name     = String(formData.get('name')      ?? '');
+//   const email    = String(formData.get('email')     ?? '');
+//   const phone    = String(formData.get('phone')     ?? '');
+//   const location = String(formData.get('location')  ?? '');
+//   const service  = String(formData.get('service')   ?? '');
+//   const budget   = String(formData.get('budget')    ?? '');
+//   const message  = String(formData.get('message')   ?? '');
+
+//   // 2) Базова валідація
+//   if (!name || !email || !message) {
+//     return { success: false, error: 'Required fields missing' };
+//   }
+
+//   // 3) Підготовка змінних для шаблонів
+//   const vars = {
+//     name: escapeHtml(name),
+//     email: escapeHtml(email),
+//     phone: escapeHtml(phone),
+//     location: escapeHtml(location),
+//     service: escapeHtml(service),
+//     budget: escapeHtml(budget),
+//     message: nl2br(escapeHtml(message)),
+//     year: String(new Date().getFullYear()),
+//   };
+
+//   const htmlAdmin  = render(ADMIN_HTML,  vars);
+//   const textAdmin  = render(ADMIN_TEXT,  { ...vars, message: message }); // у тексті — без <br>
+//   const htmlClient = render(CLIENT_HTML, vars);
+
+//   // 4) Відправка
+//   const transporter = makeTransport();
+
+//   // тобі (адміну)
+//   await transporter.sendMail({
+//     from:    `"mOliora Contact" <${process.env.SMTP_USER}>`,
+//     to:      'wordisstuff@gmail.com',
+//     replyTo: email || undefined,
+//     subject: `New request from ${name} • ${service || 'Home Services'}`,
+//     text:    textAdmin,
+//     html:    htmlAdmin,
+//   });
+
+//   // клієнту (підтвердження)
+//   await transporter.sendMail({
+//     from:    `"mOliora Home Services" <${process.env.SMTP_USER}>`,
+//     to:      email,
+//     subject: 'We received your request',
+//     html:    htmlClient, // 👈 ВАЖЛИВО: параметр називається html, НЕ htmlClient
+//   });
+
+//   return { success: true };
+// }
+
+// /* ================== ШАБЛОНИ ================== */
+
+// /** Лист тобі (адміну), HTML */
+// const ADMIN_HTML = `<!doctype html>
+// <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+// <title>New Contact Request</title></head>
+// <body style="margin:0;padding:0;background:#f5e8d9;">
+//   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5e8d9;">
+//     <tr><td align="center" style="padding:24px;">
+//       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e9dac8;">
+//         <tr><td style="background:#f5e8d9;padding:24px;text-align:center;border-bottom:1px solid #e9dac8;">
+//           <div style="font-family:Georgia,serif;font-size:28px;color:#3f3a2e;">
+//             <span style="font-weight:600;">m</span><span style="font-weight:700;">O</span>liora
+//           </div>
+//           <div style="font-family:Arial,Helvetica,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#3f3a2e;opacity:.8;font-size:12px;margin-top:6px;">Home Services</div>
+//         </td></tr>
+//         <tr><td style="padding:24px 24px 8px 24px;">
+//           <h1 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#3f3a2e;">New Contact Request</h1>
+//           <p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.8;font-size:14px;">A new message came in from your website contact form.</p>
+//         </td></tr>
+//         <tr><td style="padding:8px 24px 16px 24px;">
+//           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf6ee;border:1px solid #e9dac8;border-radius:10px;">
+//             <tr><td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;font-size:14px;">
+//               <strong style="display:inline-block;width:110px;">Name:</strong> {{name}}<br>
+//               <strong style="display:inline-block;width:110px;">Email:</strong> {{email}}<br>
+//               <strong style="display:inline-block;width:110px;">Phone:</strong> {{phone}}<br>
+//               <strong style="display:inline-block;width:110px;">City / ZIP:</strong> {{location}}<br>
+//               <strong style="display:inline-block;width:110px;">Service:</strong> {{service}}<br>
+//               <strong style="display:inline-block;width:110px;">Budget:</strong> {{budget}}
+//             </td></tr>
+//           </table>
+//         </td></tr>
+//         <tr><td style="padding:0 24px 8px 24px;">
+//           <h2 style="margin:0 0 6px 0;font-family:Georgia,serif;font-size:18px;color:#3f3a2e;">Message</h2>
+//           <div style="font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;background:#fff;border:1px solid #e9dac8;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;">{{message}}</div>
+//         </td></tr>
+//         <tr><td style="padding:16px 24px 24px 24px;text-align:center;">
+//           <a href="mailto:{{email}}" style="display:inline-block;background:#3f3a2e;color:#f5e8d9;text-decoration:none;padding:12px 18px;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;">Reply to {{name}}</a>
+//         </td></tr>
+//         <tr><td style="background:#f5e8d9;padding:14px 24px;text-align:center;border-top:1px solid #e9dac8;">
+//           <p style="margin:0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.7;font-size:12px;">© {{year}} mOliora Home Services • Minneapolis–St. Paul, MN</p>
+//         </td></tr>
+//       </table>
+//     </td></tr>
+//   </table>
+// </body></html>`;
+
+// /** Лист тобі (адміну), текстова версія (fallback) */
+// const ADMIN_TEXT = `
+// New Contact Request
+
+// Name: {{name}}
+// Email: {{email}}
+// Phone: {{phone}}
+// City / ZIP: {{location}}
+// Service: {{service}}
+// Budget: {{budget}}
+
+// Message:
+// {{message}}
+// `.trim();
+
+// /** Лист клієнту (підтвердження), HTML */
+// const CLIENT_HTML = `<!doctype html>
+// <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+// <title>Thank you from mOliora</title></head>
+// <body style="margin:0;padding:0;background:#f5e8d9;">
+//   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5e8d9;">
+//     <tr><td align="center" style="padding:24px;">
+//       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e9dac8;">
+//         <tr><td style="background:#f5e8d9;padding:24px;text-align:center;border-bottom:1px solid #e9dac8;">
+//           <div style="font-family:Georgia,serif;font-size:28px;color:#3f3a2e;">
+//             <span style="font-weight:600;">m</span><span style="font-weight:700;">O</span>liora
+//           </div>
+//           <div style="font-family:Arial,Helvetica,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#3f3a2e;opacity:.8;font-size:12px;margin-top:6px;">Home Services</div>
+//         </td></tr>
+//         <tr><td style="padding:24px;">
+//           <h1 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#3f3a2e;">Thank you, {{name}}!</h1>
+//           <p style="margin:12px 0 20px 0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.9;font-size:15px;line-height:1.6;">
+//             We’ve received your message and our team will get back to you within one business day.
+//             Below is a copy of your request for your records.
+//           </p>
+//           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf6ee;border:1px solid #e9dac8;border-radius:10px;">
+//             <tr><td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;font-size:14px;">
+//               <strong style="display:inline-block;width:110px;">Service:</strong> {{service}}<br>
+//               <strong style="display:inline-block;width:110px;">Budget:</strong> {{budget}}<br>
+//               <strong style="display:inline-block;width:110px;">City / ZIP:</strong> {{location}}<br>
+//               <strong style="display:inline-block;width:110px;">Phone:</strong> {{phone}}
+//             </td></tr>
+//           </table>
+//           <h2 style="margin:24px 0 8px 0;font-family:Georgia,serif;font-size:18px;color:#3f3a2e;">Your Message</h2>
+//           <div style="font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;border:1px solid #e9dac8;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;">{{message}}</div>
+//           <p style="margin-top:32px;text-align:center;">
+//             <a href="mailto:wordisstuff@gmail.com" style="background:#3f3a2e;color:#f5e8d9;text-decoration:none;padding:12px 22px;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;">Contact mOliora Support</a>
+//           </p>
+//         </td></tr>
+//         <tr><td style="background:#f5e8d9;padding:14px;text-align:center;border-top:1px solid #e9dac8;">
+//           <p style="margin:0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.7;font-size:12px;">© {{year}} mOliora Home Services • Minneapolis–St. Paul, MN</p>
+//         </td></tr>
+//       </table>
+//     </td></tr>
+//   </table>
+// </body></html>`;
 
 
 
