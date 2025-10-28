@@ -29,16 +29,28 @@ const Menu = () => {
     }, []);
 
     return (
-        <div className="container flex items-center justify-between p-4 bg-babyblue dark:ocean relative shadow-md text-neutral-600 dark:text-neutral-100 rounded gap-4">
-            <select
+        <div className="container flex items-center justify-between p-4 relative shadow-md text-neutral-600 dark:text-neutral-100 rounded gap-4">
+            <div>
+                <Link href="/">
+                    <img src="logoHouse.png" alt="" className="w-8" />
+                    <img src="logoLeters.png" alt="" className="w-10" />
+                </Link>
+            </div>
+            <div className="flex-col items-center justify-center">
+                <img src="logoLeters.png" alt="" className="w-50" />
+                <h2 className="flex items-center justify-center">
+                    HOME SERVICES
+                </h2>
+            </div>
+            {/* <select
                 className="cursor-pointer appearance-none ml-4 px-2 py-1 border-separate rounded bg-babyblue hover:bg-bluegren hover:dark:bg-babyblue dark:bg-ocean text-sm"
                 value={i18n.language}
                 onChange={e => i18n.changeLanguage(e.target.value)}
             >
                 <option value="us">🇺🇸</option>
                 <option value="ua">🇺🇦</option>
-            </select>
-            <ThemeToggleButton />
+            </select> */}
+            {/* <ThemeToggleButton /> */}
             <div className="relative">
                 <button
                     ref={buttonRef}
@@ -64,27 +76,50 @@ const Menu = () => {
                 {menuOpen && (
                     <div
                         ref={menuRef}
-                        className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border rounded shadow-lg z-50"
+                        className="absolute right-0 mt-2 w-48 shadow-md bg-#f5e8d9 dark:bg-gray-900  rounded shadow-lg z-50"
                     >
                         <Link
                             href="/about"
-                            className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900"
+                            className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900 text uppercase"
                         >
-                            {t('header.about')}
+                            services
                         </Link>
                         <Link
                             href="/settings"
-                            className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900"
+                            className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900 uppercase"
                         >
-                            {t('header.projects')}
+                            about
                         </Link>
                         <Link
-                            href="/logout"
-                            className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900"
+                            href="/contact"
+                            className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900 uppercase"
                         >
-                            {t('header.contacts')}
+                            contacts
                         </Link>
                     </div>
+                    // <div
+                    //     ref={menuRef}
+                    //     className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border rounded shadow-lg z-50"
+                    // >
+                    //     <Link
+                    //         href="/about"
+                    //         className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900"
+                    //     >
+                    //         {t('header.about')}
+                    //     </Link>
+                    //     <Link
+                    //         href="/settings"
+                    //         className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900"
+                    //     >
+                    //         {t('header.projects')}
+                    //     </Link>
+                    //     <Link
+                    //         href="/logout"
+                    //         className="block px-4 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 hover:dark:text-gray-900"
+                    //     >
+                    //         {t('header.contacts')}
+                    //     </Link>
+                    // </div>
                 )}
             </div>
         </div>
