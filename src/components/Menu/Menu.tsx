@@ -66,7 +66,7 @@ const Menu = () => {
 
                     {/* Дзеркальне лого знизу */}
                     <img
-                        src="/logo.png"
+                        src="/logo.PNG"
                         alt="Logo reflection"
                         className="
                             filter hue-rotate-[0deg] dark:hue-rotate-[90deg] brightness-110 dark:brightness-105
