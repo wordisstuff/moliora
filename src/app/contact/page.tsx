@@ -66,7 +66,6 @@ export default function ContactPage() {
                 | HTMLSelectElement
                 | null;
             if (el && draft[name] != null) {
-                // @ts-expect-error value присутній на всіх цих елементах
                 el.value = draft[name] as string;
             }
         });
