@@ -98,6 +98,7 @@ export async function submitContactForm(formData: FormData) {
     // Порада в проді: логувати у свій логгер/обсервабіліті
     return { success: false, error: 'Failed to send email. Please try again later.' };
   }
+  
 }
 
 

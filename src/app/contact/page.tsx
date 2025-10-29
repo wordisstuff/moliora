@@ -53,6 +53,7 @@ export default function ContactPage() {
                 });
             }
         });
+        localStorage.setItem('privacyAgreed', 'false');
     }
 
     return (
