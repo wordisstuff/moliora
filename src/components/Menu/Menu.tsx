@@ -39,7 +39,7 @@ const Menu = () => {
                 >
                     {/* Верхнє лого */}
                     <img
-                        src="/logo.png"
+                        src="/logo.PNG"
                         alt="Logo"
                         className="
                             absolute top-[-18px] left-1 w-14
