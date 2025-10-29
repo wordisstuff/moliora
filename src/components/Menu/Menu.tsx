@@ -32,16 +32,60 @@ const Menu = () => {
 
     return (
         <div className="container flex items-center justify-between p-4 relative shadow-md text-neutral-600 dark:text-neutral-100 rounded gap-4">
-            <div>
-                <Link href="/" className="flex items-center gap-2">
-                    <img src="logoHouse.png" alt="" className="w-8" />
-                    <img src="logoLeters.png" alt="" className="w-10" />
+            <div className="relative">
+                <Link
+                    href="/"
+                    className="relative flex flex-col items-center justify-center group"
+                >
+                    {/* Верхнє лого */}
+                    <img
+                        src="/logo.png"
+                        alt="Logo"
+                        className="
+                            absolute top-[-18px] left-1 w-14
+                            filter hue-rotate-[0deg] dark:hue-rotate-[90deg] brightness-110 dark:brightness-105
+                            drop-shadow-[0_4px_6px_rgba(0,0,0,0.25)]
+                            dark:drop-shadow-[0_4px_8px_rgba(255,255,255,0.15)]
+                            transition-all duration-500 ease-out
+                            group-hover:drop-shadow-[0_6px_10px_rgba(0,0,0,0.45)]
+                            group-hover:dark:drop-shadow-[0_6px_12px_rgba(255,255,255,0.25)]"
+                    />
+
+                    {/* Текст */}
+                    <p
+                        className="
+        relative z-10 flex items-center justify-center
+        font-serif font-extrabold tracking-wide
+        text-neutral-800 dark:text-neutral-100
+        transition-colors duration-300
+        group-hover:text-bluegren
+    "
+                    >
+                        mOliora
+                    </p>
+
+                    {/* Дзеркальне лого знизу */}
+                    <img
+                        src="/logo.png"
+                        alt="Logo reflection"
+                        className="
+                            filter hue-rotate-[0deg] dark:hue-rotate-[90deg] brightness-110 dark:brightness-105
+                            drop-shadow-[0_2px_3px_rgba(0,0,0,0.2)]
+                            dark:drop-shadow-[0_2px_3px_rgba(255,255,255,0.15)]
+                            transition-all duration-500 ease-out
+                            group-hover:opacity-80 group-hover:blur-0
+                            absolute scale-y-[-1] top-5 left-1 w-14 h-2 opacity-60 blur-[1px]
+    "
+                    />
                 </Link>
             </div>
 
-            <div className="flex-col items-center justify-center hidden sm:flex">
-                <img src="logoLeters.png" alt="" className="w-50" />
-                <h2 className="flex items-center justify-center">
+            <div className="flex-col items-center justify-center sm:flex">
+                {/* <img src="logoLeters.png" alt="" className="w-50" /> */}
+                <h1 className="flex items-center justify-center text-4xl font-serif font-extrabold">
+                    mOliora
+                </h1>
+                <h2 className="flex items-center justify-center text-sm">
                     HOME SERVICES
                 </h2>
             </div>
@@ -73,7 +117,7 @@ const Menu = () => {
                 {menuOpen && (
                     <div
                         ref={menuRef}
-                        className="absolute right-0 mt-2 w-48 dark:bg-gray-900 z-50 border border-neutral-200/50 dark:border-neutral-800/60 rounded-md overflow-hidden backdrop-blur-sm"
+                        className="absolute right-0 mt-2 w-48 dark:bg-gray-600 z-50 border border-neutral-200/50 dark:border-neutral-800/60 rounded-md overflow-hidden backdrop-blur-sm"
                     >
                         <Link
                             href="/about"
