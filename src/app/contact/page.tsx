@@ -3,6 +3,34 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { submitContactForm } from '../actions/contactForm';
 import Link from 'next/link';
 
+/** ---------- draft helpers ---------- */
+type Draft = {
+    name?: string;
+    phone?: string;
+    email?: string;
+    location?: string;
+    service?: string;
+    budget?: string;
+    message?: string;
+};
+
+const DRAFT_KEY = 'contactDraft_v1';
+const CONSENT_KEY = 'privacyAgreed';
+
+function readDraft(): Draft {
+    try {
+        return JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}');
+    } catch {
+        return {};
+    }
+}
+function writeDraft(d: Draft) {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+}
+function clearDraft() {
+    localStorage.removeItem(DRAFT_KEY);
+}
+
 export default function ContactPage() {
     const formRef = useRef<HTMLFormElement>(null);
     const [toast, setToast] = useState<{
@@ -12,20 +40,84 @@ export default function ContactPage() {
     const [isPending, startTransition] = useTransition();
     const [consent, setConsent] = useState(false);
 
+    /** Відновлюємо згоду і чернетку з localStorage при відкритті */
     useEffect(() => {
-        const agreed = localStorage.getItem('privacyAgreed') === 'true';
+        const agreed = localStorage.getItem(CONSENT_KEY) === 'true';
         if (agreed) setConsent(true);
+
+        const draft = readDraft();
+        const f = formRef.current;
+        if (!f) return;
+
+        (
+            [
+                'name',
+                'phone',
+                'email',
+                'location',
+                'service',
+                'budget',
+                'message',
+            ] as const
+        ).forEach(name => {
+            const el = f.elements.namedItem(name) as
+                | HTMLInputElement
+                | HTMLTextAreaElement
+                | HTMLSelectElement
+                | null;
+            if (el && draft[name] != null) {
+                // @ts-expect-error value присутній на всіх цих елементах
+                el.value = draft[name] as string;
+            }
+        });
     }, []);
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    /** Збереження форми (debounce 250ms) */
+    const draftTimer = useRef<number | null>(null);
+    const saveDraft = () => {
+        const f = formRef.current;
+        if (!f) return;
+        const d: Draft = {
+            name:
+                (f.elements.namedItem('name') as HTMLInputElement)?.value || '',
+            phone:
+                (f.elements.namedItem('phone') as HTMLInputElement)?.value ||
+                '',
+            email:
+                (f.elements.namedItem('email') as HTMLInputElement)?.value ||
+                '',
+            location:
+                (f.elements.namedItem('location') as HTMLInputElement)?.value ||
+                '',
+            service:
+                (f.elements.namedItem('service') as HTMLSelectElement)?.value ||
+                '',
+            budget:
+                (f.elements.namedItem('budget') as HTMLSelectElement)?.value ||
+                '',
+            message:
+                (f.elements.namedItem('message') as HTMLTextAreaElement)
+                    ?.value || '',
+        };
+        writeDraft(d);
+    };
+    const handleAnyChange = () => {
+        if (draftTimer.current) window.clearTimeout(draftTimer.current);
+        draftTimer.current = window.setTimeout(saveDraft, 250);
+    };
+
+    /** Згода на контакт */
+    const handleConsentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.checked;
         setConsent(value);
-        // синхронізуємо localStorage
-        localStorage.setItem('privacyAgreed', value ? 'true' : 'false');
+        localStorage.setItem(CONSENT_KEY, value ? 'true' : 'false');
     };
+
+    /** Надсилання форми */
     async function handleSubmit(formData: FormData) {
         setToast({ type: 'info', msg: 'Sending…' });
 
-        // Honeypot: якщо поле "website" заповнили — не відправляємо
+        // honeypot
         if ((formData.get('website') as string)?.trim()) {
             setToast({ type: 'error', msg: 'Spam detected.' });
             return;
@@ -39,6 +131,10 @@ export default function ContactPage() {
                         type: 'success',
                         msg: '✅ Message sent successfully! We’ll get back within 1 business day.',
                     });
+                    clearDraft(); // ← чистимо чернетку після успіху
+                    localStorage.setItem('privacyAgreed', 'false');
+                    setConsent(false);
+
                     formRef.current?.reset();
                 } else {
                     setToast({
@@ -53,7 +149,6 @@ export default function ContactPage() {
                 });
             }
         });
-        localStorage.setItem('privacyAgreed', 'false');
     }
 
     return (
@@ -77,7 +172,7 @@ export default function ContactPage() {
                 {/* Left: form */}
                 <form
                     ref={formRef}
-                    // action={handleSubmit}
+                    onChange={handleAnyChange} // ← автозбереження при зміні будь-якого поля
                     onSubmit={e => {
                         e.preventDefault();
                         const fd = new FormData(e.currentTarget);
@@ -86,7 +181,7 @@ export default function ContactPage() {
                     method="POST"
                     className="md:col-span-2 bg-white/60 dark:bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-[color:var(--foreground)]/15"
                 >
-                    {/* Toast */}
+                    {/* Toast (a11y) */}
                     <div aria-live="polite" className="sr-only">
                         {toast?.msg}
                     </div>
@@ -200,7 +295,7 @@ export default function ContactPage() {
                         />
                     </label>
 
-                    {/* Honeypot (приховане поле) */}
+                    {/* Honeypot */}
                     <input
                         type="text"
                         name="website"
@@ -215,27 +310,20 @@ export default function ContactPage() {
                             <input
                                 type="checkbox"
                                 checked={consent}
-                                onChange={handleChange}
+                                onChange={handleConsentChange}
                                 required={!consent}
                                 className="mr-2"
                             />
                             I agree to be contacted about my request.
+                            {/* Перед переходом на Policy — явно збережемо чернетку */}
                             <Link
                                 href="/policy"
+                                onClick={saveDraft}
                                 className="text-bluegren hover:underline ml-1"
                             >
                                 Privacy Policy
                             </Link>
                         </label>
-                        {/* <input
-                            id="agree"
-                            type="checkbox"
-                            required
-                            className="size-4 accent-[color:var(--foreground)]"
-                        />
-                        <label htmlFor="agree" className="text-sm opacity-80">
-                            I agree to be contacted about my request.
-                        </label> */}
                     </div>
 
                     <button
@@ -271,7 +359,7 @@ export default function ContactPage() {
                     </p>
                 </form>
 
-                {/* Right: contact info / hours (без змін) */}
+                {/* Right: info (без змін) */}
                 <aside className="space-y-6">
                     <div className="rounded-xl p-6 border border-[color:var(--foreground)]/15 bg-white/50 dark:bg-white/5">
                         <h3 className="font-serif text-2xl">Get in touch</h3>
