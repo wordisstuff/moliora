@@ -1,6 +1,7 @@
 'use client';
-import { useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { submitContactForm } from '../actions/contactForm';
+import Link from 'next/link';
 
 export default function ContactPage() {
     const formRef = useRef<HTMLFormElement>(null);
@@ -9,7 +10,18 @@ export default function ContactPage() {
         msg: string;
     } | null>(null);
     const [isPending, startTransition] = useTransition();
+    const [consent, setConsent] = useState(false);
 
+    useEffect(() => {
+        const agreed = localStorage.getItem('privacyAgreed') === 'true';
+        if (agreed) setConsent(true);
+    }, []);
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.checked;
+        setConsent(value);
+        // синхронізуємо localStorage
+        localStorage.setItem('privacyAgreed', value ? 'true' : 'false');
+    };
     async function handleSubmit(formData: FormData) {
         setToast({ type: 'info', msg: 'Sending…' });
 
@@ -198,7 +210,23 @@ export default function ContactPage() {
                     />
 
                     <div className="mt-4 flex items-center gap-2">
-                        <input
+                        <label className="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={consent}
+                                onChange={handleChange}
+                                required={!consent}
+                                className="mr-2"
+                            />
+                            I agree to be contacted about my request.
+                            <Link
+                                href="/policy"
+                                className="text-bluegren hover:underline ml-1"
+                            >
+                                Privacy Policy
+                            </Link>
+                        </label>
+                        {/* <input
                             id="agree"
                             type="checkbox"
                             required
@@ -206,7 +234,7 @@ export default function ContactPage() {
                         />
                         <label htmlFor="agree" className="text-sm opacity-80">
                             I agree to be contacted about my request.
-                        </label>
+                        </label> */}
                     </div>
 
                     <button

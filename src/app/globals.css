@@ -25,3 +25,51 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+/* Акцент для підсвітки (світло-зелений) */
+:root {
+  --accent-zap: #baf7d0;
+}
+
+/* light green */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent-zap: #9fe9c1;
+  }
+
+  /* трохи темніший у dark */
+}
+
+/* Базовий клас для “зигзаг-блискавки” */
+.zap {
+  position: relative;
+  isolation: isolate;
+  /* щоб псевдоелемент був під текстом */
+}
+
+/* Активний стан: малюємо блискавку поверх/під текст */
+.zap--active::after {
+  content: "";
+  position: absolute;
+  inset: 45% -6px auto -6px;
+  /* вертикальне розміщення смуги */
+  height: 10px;
+  /* товщина “перечеркування” */
+  background: var(--accent-zap);
+  z-index: -1;
+  transform: rotate(-8deg) skewX(-10deg);
+  border-radius: 2px;
+  /* Невеликий “зигзаг” через clip-path — виглядає як блискавка */
+  clip-path: polygon(0% 0%,
+      78% 0%,
+      70% 100%,
+      100% 100%,
+      22% 100%,
+      30% 0%);
+}
+
+/* Трохи тіні для кращого читання на контрасному фоні */
+.zap--active {
+  text-shadow: 0 0 1px rgba(0, 0, 0, .05);
+}
