@@ -18,7 +18,7 @@ export default function EstimatePage() {
     const billTo = {
         name: 'Ann Becker',
         address1: '393 Herschel St, St Paul MN 55104',
-        phone: '651-285-7695',
+        phone: '651',
     };
 
     const company = {
