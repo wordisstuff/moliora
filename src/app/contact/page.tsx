@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { submitContactForm } from '../actions/contactForm';
 import Link from 'next/link';
-import ContactInfo from '@/components/ContactInfo';
+import ContactsInfo from '@/components/ContactsInfo';
 
 /** ---------- draft helpers ---------- */
 type Draft = {
@@ -370,7 +370,7 @@ export default function ContactPage() {
                 <aside className="space-y-6">
                     <div className="rounded-xl p-6 border border-[color:var(--foreground)]/15 bg-white/50 dark:bg-white/5">
                         <h3 className="font-serif text-2xl">Get in touch</h3>
-                        <ContactInfo />
+                        <ContactsInfo />
                     </div>
 
                     <div className="rounded-xl p-6 border border-[color:var(--foreground)]/15 bg-white/50 dark:bg-white/5">
