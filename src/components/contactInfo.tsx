@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 
-const contactInfo = () => {
+const ContactInfo = () => {
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
 
@@ -43,4 +43,4 @@ const contactInfo = () => {
     );
 };
 
-export default contactInfo;
+export default ContactInfo;

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import сontactInfo from '@/components/contactInfo';
+import ContactInfo from '@/components/ContactInfo';
 
 export default function Footer() {
     return (
@@ -110,7 +110,7 @@ export default function Footer() {
                 {/* Contact */}
                 <div>
                     <h4 className="font-serif text-lg mb-3">Contact</h4>
-                    <contactInfo />
+                    <ContactInfo />
                     <ul className="space-y-2 text-sm">
                         <li>
                             <span className="opacity-70">
