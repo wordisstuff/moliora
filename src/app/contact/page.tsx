@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { submitContactForm } from '../actions/contactForm';
 import Link from 'next/link';
+import сontactInfo from '@/components/contactInfo';
 
 /** ---------- draft helpers ---------- */
 type Draft = {
@@ -149,6 +150,13 @@ export default function ContactPage() {
             }
         });
     }
+    const [phone, setPhone] = useState('');
+
+    useEffect(() => {
+        const phoneCode = '+1';
+        const phoneNumber = '(612) 468-3176';
+        setPhone(`${phoneCode} ${phoneNumber}`);
+    }, []);
 
     return (
         <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -362,32 +370,7 @@ export default function ContactPage() {
                 <aside className="space-y-6">
                     <div className="rounded-xl p-6 border border-[color:var(--foreground)]/15 bg-white/50 dark:bg-white/5">
                         <h3 className="font-serif text-2xl">Get in touch</h3>
-                        <ul className="mt-3 space-y-2">
-                            <li>
-                                <span className="opacity-70">Phone:</span>{' '}
-                                <a
-                                    className="underline-offset-2 hover:underline"
-                                    href="tel:+16124683176"
-                                >
-                                    +1 (612) 468-3176
-                                </a>
-                            </li>
-                            <li>
-                                <span className="opacity-70">Email:</span>{' '}
-                                <a
-                                    className="underline-offset-2 hover:underline"
-                                    href="mailto:support@moliora.us"
-                                >
-                                    support@moliora.us
-                                </a>
-                            </li>
-                            <li>
-                                <span className="opacity-70">
-                                    Service area:
-                                </span>{' '}
-                                Minneapolis–St. Paul, MN
-                            </li>
-                        </ul>
+                        <сontactInfo />
                     </div>
 
                     <div className="rounded-xl p-6 border border-[color:var(--foreground)]/15 bg-white/50 dark:bg-white/5">
@@ -422,7 +405,7 @@ export default function ContactPage() {
                         </h4>
                     </div>
                     <a
-                        href="tel:+16124683176"
+                        href={`tel:${phone}`}
                         className="h-11 px-6 rounded-md bg-[color:var(--foreground)] text-[var(--background)] flex items-center justify-center"
                     >
                         Call now

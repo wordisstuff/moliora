@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import сontactInfo from '@/components/contactInfo';
 
 export default function Footer() {
     return (
@@ -109,29 +110,8 @@ export default function Footer() {
                 {/* Contact */}
                 <div>
                     <h4 className="font-serif text-lg mb-3">Contact</h4>
+                    <contactInfo />
                     <ul className="space-y-2 text-sm">
-                        <li>
-                            <span className="opacity-70">Phone:</span>{' '}
-                            <a
-                                className="hover:underline underline-offset-2"
-                                href="tel:+16124683176"
-                            >
-                                +1 (612) 468-3176
-                            </a>
-                        </li>
-                        <li>
-                            <span className="opacity-70">Email:</span>{' '}
-                            <a
-                                className="hover:underline underline-offset-2"
-                                href="mailto:support@moliora.us"
-                            >
-                                support@moliora.us
-                            </a>
-                        </li>
-                        <li>
-                            <span className="opacity-70">Service area:</span>{' '}
-                            Minneapolis–St. Paul, MN
-                        </li>
                         <li>
                             <span className="opacity-70">
                                 Licensed &amp; Insured

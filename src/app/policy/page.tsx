@@ -1,10 +1,18 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function PrivacyPolicy() {
     const router = useRouter();
 
+    const [email, setEmail] = useState('');
+
+    useEffect(() => {
+        const emailUser = 'support';
+        const emailDomain = 'moliora.us';
+        setEmail(`${emailUser}@${emailDomain}`);
+    }, []);
     const handleAgree = () => {
         // зберігаємо “згоду” в localStorage (опціонально)
         localStorage.setItem('privacyAgreed', 'true');
@@ -58,10 +66,10 @@ export default function PrivacyPolicy() {
                 <p className="leading-relaxed">
                     If you have any questions, please contact us at{' '}
                     <a
-                        href="mailto:support@moliora.us"
+                        href={email}
                         className="underline hover:text-[var(--accent-zap)]"
                     >
-                        support@moliora.us
+                        {email}
                     </a>
                     .
                 </p>
