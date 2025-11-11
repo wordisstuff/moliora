@@ -1,3 +1,20 @@
+import { env } from '../utils/env.js';
+export { VARS } from '@/app/constants/consts.js';
+
+export const FIFTEEN_MINUTES = 900000;
+export const TWO_HOURS = 7200000;
+export const ONE_DAY = 86400000;
+
+export const authDb = {
+    // port: env(VARS.PORT, 3000),
+    // secret: env('MY_SYCRET'),
+    user: env(VARS.USER),
+    pwd: env(VARS.PASSWORD),
+    url: env(VARS.URL),
+    db: env(VARS.DB),
+    mac: [process.env['MAC_1'], process.env['MAC_2']],
+};
+
 const ADMIN_HTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>New Contact Request</title></head>
