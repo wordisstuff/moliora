@@ -88,12 +88,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+    width: 'device-width',
+    initialScale: 1,
     themeColor: [
         { media: '(prefers-color-scheme: light)', color: '#f5e8d9' },
         { media: '(prefers-color-scheme: dark)', color: '#3f3a2e' },
     ],
 };
-
 export default async function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -145,7 +146,7 @@ export default async function RootLayout({
     return (
         <html lang="en" className={initialTheme} suppressHydrationWarning>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} container mx-auto antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
                 id="top"
             >
                 {/* JSON-LD Schema.org */}

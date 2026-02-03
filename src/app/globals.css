@@ -4,6 +4,14 @@
   --background: #f5e8d9;
   --foreground: #3f3a2e;
   --foregroundHover: #71664e;
+
+  
+      --glass-bg: rgba(255, 255, 255, 0.12);
+      --glass-bg-strong: rgba(255, 255, 255, 0.18);
+      --glass-border: rgba(255, 255, 255, 0.22);
+      --glass-highlight: rgba(255, 255, 255, 0.55);
+      --glass-shadow: rgba(0, 0, 0, 0.18);
+    
 }
 
 /* @theme inline {

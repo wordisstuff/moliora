@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <!-- фон -->
+    <rect width="64" height="64" rx="12" fill="#f5e8d9"/>
+    <!-- будинок -->
+    <path d="M14 30 L32 16 L50 30 V50 H14 Z" fill="#3f3a2e"/>
+    <!-- двері -->
+    <rect x="28" y="36" width="8" height="14" fill="#f5e8d9"/>
+</svg>

@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useRef, useState, useTransition } from 'react';
-import { submitContactForm } from '../actions/contactForm';
 import Link from 'next/link';
 import ContactsInfo from '@/components/ContactsInfo';
 
@@ -13,6 +12,12 @@ type Draft = {
     service?: string;
     budget?: string;
     message?: string;
+};
+
+type ApiResponse = {
+    success: boolean;
+    error?: string;
+    id?: string;
 };
 
 const DRAFT_KEY = 'contactDraft_v1';
@@ -118,31 +123,54 @@ export default function ContactPage() {
         setToast({ type: 'info', msg: 'Sending…' });
 
         // honeypot
-        if ((formData.get('website') as string)?.trim()) {
+        if ((formData.get('website') as string | null)?.trim()) {
             setToast({ type: 'error', msg: 'Spam detected.' });
             return;
         }
 
+        // Готуємо "чистий" обʼєкт для JSON
+        const payload: Record<string, string> = {};
+        formData.forEach((value, key) => {
+            // у нас тільки текстові поля, але на всяк випадок:
+            if (typeof value === 'string') {
+                payload[key] = value;
+            }
+        });
+
         startTransition(async () => {
             try {
-                const result = await submitContactForm(formData);
-                if (result?.success) {
-                    setToast({
-                        type: 'success',
-                        msg: '✅ Message sent successfully! We’ll get back within 1 business day.',
-                    });
-                    clearDraft(); // ← чистимо чернетку після успіху
-                    localStorage.setItem('privacyAgreed', 'false');
-                    setConsent(false);
+                const res = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
 
-                    formRef.current?.reset();
-                } else {
+                const data = (await res.json()) as ApiResponse;
+
+                if (!res.ok || !data.success) {
                     setToast({
                         type: 'error',
-                        msg: result?.error || '❌ Failed to send message.',
+                        msg:
+                            data.error ??
+                            `❌ Failed to send message (status ${res.status}).`,
                     });
+                    return;
                 }
-            } catch {
+
+                // успіх
+                setToast({
+                    type: 'success',
+                    msg: '✅ Message sent successfully! We’ll get back within 1 business day.',
+                });
+
+                clearDraft();
+                localStorage.setItem('privacyAgreed', 'false');
+                setConsent(false);
+                formRef.current?.reset();
+            } catch (e) {
+                console.error('Contact form error:', e);
                 setToast({
                     type: 'error',
                     msg: '❌ Unexpected error. Please try again later.',

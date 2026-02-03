@@ -1,5 +1,5 @@
 import { env } from '../utils/env.js';
-export { VARS } from '@/app/constants/consts.js';
+import { VARS } from './consts.js';
 
 export const FIFTEEN_MINUTES = 900000;
 export const TWO_HOURS = 7200000;
