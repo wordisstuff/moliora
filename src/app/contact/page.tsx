@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useRef, useState, useTransition } from 'react';
-import { submitContactForm } from '../actions/contactForm';
 import Link from 'next/link';
 import ContactsInfo from '@/components/ContactsInfo';
 
@@ -13,6 +12,12 @@ type Draft = {
     service?: string;
     budget?: string;
     message?: string;
+};
+
+type ApiResponse = {
+    success: boolean;
+    error?: string;
+    id?: string;
 };
 
 const DRAFT_KEY = 'contactDraft_v1';
@@ -118,31 +123,54 @@ export default function ContactPage() {
         setToast({ type: 'info', msg: 'Sending…' });
 
         // honeypot
-        if ((formData.get('website') as string)?.trim()) {
+        if ((formData.get('website') as string | null)?.trim()) {
             setToast({ type: 'error', msg: 'Spam detected.' });
             return;
         }
 
+        // Готуємо "чистий" обʼєкт для JSON
+        const payload: Record<string, string> = {};
+        formData.forEach((value, key) => {
+            // у нас тільки текстові поля, але на всяк випадок:
+            if (typeof value === 'string') {
+                payload[key] = value;
+            }
+        });
+
         startTransition(async () => {
             try {
-                const result = await submitContactForm(formData);
-                if (result?.success) {
-                    setToast({
-                        type: 'success',
-                        msg: '✅ Message sent successfully! We’ll get back within 1 business day.',
-                    });
-                    clearDraft(); // ← чистимо чернетку після успіху
-                    localStorage.setItem('privacyAgreed', 'false');
-                    setConsent(false);
+                const res = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
 
-                    formRef.current?.reset();
-                } else {
+                const data = (await res.json()) as ApiResponse;
+
+                if (!res.ok || !data.success) {
                     setToast({
                         type: 'error',
-                        msg: result?.error || '❌ Failed to send message.',
+                        msg:
+                            data.error ??
+                            `❌ Failed to send message (status ${res.status}).`,
                     });
+                    return;
                 }
-            } catch {
+
+                // успіх
+                setToast({
+                    type: 'success',
+                    msg: '✅ Message sent successfully! We’ll get back within 1 business day.',
+                });
+
+                clearDraft();
+                localStorage.setItem('privacyAgreed', 'false');
+                setConsent(false);
+                formRef.current?.reset();
+            } catch (e) {
+                console.error('Contact form error:', e);
                 setToast({
                     type: 'error',
                     msg: '❌ Unexpected error. Please try again later.',
@@ -159,150 +187,144 @@ export default function ContactPage() {
     }, []);
 
     return (
-        <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-            {/* Hero */}
-            <section className="mx-auto w-full max-w-5xl px-6 pt-16 pb-6">
-                <p className="tracking-[0.2em] uppercase text-sm opacity-70">
-                    Contact
-                </p>
-                <h1 className="mt-2 text-4xl md:text-5xl font-serif">
-                    Tell us about your project
-                </h1>
-                <p className="mt-3 max-w-2xl opacity-80">
-                    We’ll review your request and get back within one business
-                    day.
-                </p>
-            </section>
+        <main className="min-h-screen bg-[#0f1111] pt-20 text-white">
+            <section className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-2">
+                <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#d6ad63]">
+                        Contact Moliora
+                    </p>
 
-            {/* Content grid */}
-            <section className="mx-auto w-full max-w-5xl px-6 pb-20 grid gap-10 md:grid-cols-3">
-                {/* Left: form */}
+                    <h1 className="mt-5 text-5xl font-semibold leading-tight sm:text-6xl">
+                        Request Your Free Estimate
+                    </h1>
+
+                    <p className="mt-6 max-w-xl text-lg leading-8 text-white/70">
+                        Tell us about your project. We’ll review the details and
+                        get back to you with the next steps.
+                    </p>
+
+                    <div className="mt-10 space-y-5 text-white/75">
+                        <p>
+                            <span className="text-[#d6ad63]">Phone:</span>{' '}
+                            <a
+                                href="tel:+16124683176"
+                                className="hover:text-white"
+                            >
+                                (612) 468-3176
+                            </a>
+                        </p>
+
+                        <p>
+                            <span className="text-[#d6ad63]">Email:</span>{' '}
+                            <a
+                                href="mailto:support@moliora.us"
+                                className="hover:text-white"
+                            >
+                                support@moliora.us
+                            </a>
+                        </p>
+
+                        <p>
+                            <span className="text-[#d6ad63]">
+                                Service Area:
+                            </span>{' '}
+                            Minneapolis–St. Paul, MN
+                        </p>
+                    </div>
+                </div>
+
                 <form
                     ref={formRef}
-                    onChange={handleAnyChange} // ← автозбереження при зміні будь-якого поля
+                    onChange={handleAnyChange}
                     onSubmit={e => {
                         e.preventDefault();
                         const fd = new FormData(e.currentTarget);
                         handleSubmit(fd);
                     }}
                     method="POST"
-                    className="md:col-span-2 bg-white/60 dark:bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-[color:var(--foreground)]/15"
+                    className="border border-white/10 bg-white/[0.03] p-6 shadow-2xl"
                 >
-                    {/* Toast (a11y) */}
                     <div aria-live="polite" className="sr-only">
                         {toast?.msg}
                     </div>
+
                     {toast && (
                         <div
-                            className={`mb-4 rounded-lg border p-3 text-sm ${
+                            className={`mb-5 border p-4 text-sm ${
                                 toast.type === 'success'
-                                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                                    ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
                                     : toast.type === 'error'
-                                    ? 'bg-rose-50 border-rose-300 text-rose-900'
-                                    : 'bg-amber-50 border-amber-300 text-amber-900'
+                                      ? 'border-rose-400/40 bg-rose-500/10 text-rose-200'
+                                      : 'border-[#d6ad63]/40 bg-[#d6ad63]/10 text-[#f0c978]'
                             }`}
                         >
                             {toast.msg}
                         </div>
                     )}
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <label className="grid gap-1">
-                            <span className="text-sm uppercase tracking-wide opacity-70">
-                                Full name
-                            </span>
-                            <input
-                                name="name"
-                                required
-                                className="h-11 rounded-md px-3 bg-white/80 dark:bg-black/20 border border-[color:var(--foreground)]/20 focus:outline-none focus:ring-2 focus:ring-[color:var(--foreground)]/30"
-                                placeholder="John Smith"
-                            />
-                        </label>
-
-                        <label className="grid gap-1">
-                            <span className="text-sm uppercase tracking-wide opacity-70">
-                                Phone
-                            </span>
-                            <input
-                                name="phone"
-                                inputMode="tel"
-                                className="h-11 rounded-md px-3 bg-white/80 dark:bg-black/20 border border-[color:var(--foreground)]/20 focus:outline-none focus:ring-2 focus:ring-[color:var(--foreground)]/30"
-                                placeholder="(612) 555-0123"
-                            />
-                        </label>
-
-                        <label className="grid gap-1">
-                            <span className="text-sm uppercase tracking-wide opacity-70">
-                                Email
-                            </span>
-                            <input
-                                name="email"
-                                type="email"
-                                required
-                                className="h-11 rounded-md px-3 bg-white/80 dark:bg-black/20 border border-[color:var(--foreground)]/20 focus:outline-none focus:ring-2 focus:ring-[color:var(--foreground)]/30"
-                                placeholder="you@example.com"
-                            />
-                        </label>
-
-                        <label className="grid gap-1">
-                            <span className="text-sm uppercase tracking-wide opacity-70">
-                                City / ZIP
-                            </span>
-                            <input
-                                name="location"
-                                className="h-11 rounded-md px-3 bg-white/80 dark:bg-black/20 border border-[color:var(--foreground)]/20 focus:outline-none focus:ring-2 focus:ring-[color:var(--foreground)]/30"
-                                placeholder="Minneapolis, 55401"
-                            />
-                        </label>
-                    </div>
-
-                    <div className="mt-4 grid gap-4 md:grid-cols-2">
-                        <label className="grid gap-1">
-                            <span className="text-sm uppercase tracking-wide opacity-70">
-                                Service
-                            </span>
-                            <select
-                                name="service"
-                                className="h-11 rounded-md px-3 bg-white/80 dark:bg-black/20 border border-[color:var(--foreground)]/20"
-                            >
-                                <option>Drywall & Painting</option>
-                                <option>Flooring</option>
-                                <option>Plumbing</option>
-                                <option>Electrical</option>
-                                <option>Other</option>
-                            </select>
-                        </label>
-
-                        <label className="grid gap-1">
-                            <span className="text-sm uppercase tracking-wide opacity-70">
-                                Budget (optional)
-                            </span>
-                            <select
-                                name="budget"
-                                className="h-11 rounded-md px-3 bg-white/80 dark:bg-black/20 border border-[color:var(--foreground)]/20"
-                            >
-                                <option>Under $1,000</option>
-                                <option>$1,000 – $5,000</option>
-                                <option>$5,000 – $15,000</option>
-                                <option>$15,000+</option>
-                            </select>
-                        </label>
-                    </div>
-
-                    <label className="grid gap-1 mt-4">
-                        <span className="text-sm uppercase tracking-wide opacity-70">
-                            Project details
-                        </span>
-                        <textarea
-                            name="message"
-                            rows={5}
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <input
+                            name="name"
                             required
-                            className="rounded-md px-3 py-2 bg-white/80 dark:bg-black/20 border border-[color:var(--foreground)]/20 focus:outline-none focus:ring-2 focus:ring-[color:var(--foreground)]/30"
-                            placeholder="Tell us about the scope, timeline, and any photos/links…"
+                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
+                            placeholder="Full Name"
                         />
-                    </label>
 
-                    {/* Honeypot */}
+                        <input
+                            name="phone"
+                            inputMode="tel"
+                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
+                            placeholder="Phone Number"
+                        />
+
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
+                            placeholder="Email Address"
+                        />
+
+                        <input
+                            name="location"
+                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
+                            placeholder="City / ZIP"
+                        />
+                    </div>
+
+                    <div className="mt-5 grid gap-5 md:grid-cols-2">
+                        <select
+                            name="service"
+                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none focus:border-[#d6ad63]"
+                        >
+                            <option>Window Installation</option>
+                            <option>Door Installation</option>
+                            <option>Deck Repair</option>
+                            <option>Remodeling</option>
+                            <option>Exterior Services</option>
+                            <option>Handyman Services</option>
+                            <option>Other</option>
+                        </select>
+
+                        <select
+                            name="budget"
+                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none focus:border-[#d6ad63]"
+                        >
+                            <option>Under $1,000</option>
+                            <option>$1,000 – $5,000</option>
+                            <option>$5,000 – $15,000</option>
+                            <option>$15,000+</option>
+                        </select>
+                    </div>
+
+                    <textarea
+                        name="message"
+                        rows={6}
+                        required
+                        className="mt-5 w-full border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
+                        placeholder="Tell us about the scope, timeline, and any photos/links…"
+                    />
+
                     <input
                         type="text"
                         name="website"
@@ -312,31 +334,30 @@ export default function ContactPage() {
                         aria-hidden="true"
                     />
 
-                    <div className="mt-4 flex items-center gap-2">
-                        <label className="inline-flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={consent}
-                                onChange={handleConsentChange}
-                                required={!consent}
-                                className="mr-2"
-                            />
+                    <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-white/65">
+                        <input
+                            type="checkbox"
+                            checked={consent}
+                            onChange={handleConsentChange}
+                            required={!consent}
+                            className="mt-1"
+                        />
+                        <span>
                             I agree to be contacted about my request.
-                            {/* Перед переходом на Policy — явно збережемо чернетку */}
                             <Link
                                 href="/policy"
                                 onClick={saveDraft}
-                                className="text-bluegren hover:underline ml-1"
+                                className="ml-1 text-[#d6ad63] hover:underline"
                             >
                                 Privacy Policy
                             </Link>
-                        </label>
-                    </div>
+                        </span>
+                    </label>
 
                     <button
                         type="submit"
                         disabled={isPending}
-                        className="mt-6 h-11 px-6 rounded-md bg-[color:var(--foreground)] text-[var(--background)] font-medium hover:opacity-90 transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                        className="mt-7 inline-flex items-center gap-3 bg-[#d6ad63] px-8 py-4 text-sm font-bold uppercase tracking-wider text-black transition hover:bg-[#f0c978] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {isPending && (
                             <svg
@@ -359,57 +380,45 @@ export default function ContactPage() {
                                 />
                             </svg>
                         )}
-                        {isPending ? 'Sending…' : 'Send request'}
+                        {isPending ? 'Sending…' : 'Send Request'}
                     </button>
-                    <p className="mt-2 text-xs opacity-70">
+
+                    <p className="mt-3 text-xs text-white/45">
                         Response within 1 business day.
                     </p>
                 </form>
+            </section>
 
-                {/* Right: info (без змін) */}
-                <aside className="space-y-6">
-                    <div className="rounded-xl p-6 border border-[color:var(--foreground)]/15 bg-white/50 dark:bg-white/5">
-                        <h3 className="font-serif text-2xl">Get in touch</h3>
-                        <ContactsInfo />
+            <section className="border-t border-white/10 bg-[#101212] px-6 py-14">
+                <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-3">
+                    <div className="border border-white/10 p-6">
+                        <h3 className="text-xl font-semibold text-[#d6ad63]">
+                            Get in touch
+                        </h3>
+                        <div className="mt-4 text-white/65">
+                            <ContactsInfo />
+                        </div>
                     </div>
 
-                    <div className="rounded-xl p-6 border border-[color:var(--foreground)]/15 bg-white/50 dark:bg-white/5">
-                        <h3 className="font-serif text-2xl">Hours</h3>
-                        <ul className="mt-3 space-y-1">
+                    <div className="border border-white/10 p-6">
+                        <h3 className="text-xl font-semibold text-[#d6ad63]">
+                            Hours
+                        </h3>
+                        <ul className="mt-4 space-y-2 text-white/65">
                             <li>Mon–Fri: 8:00–18:00</li>
                             <li>Sat: 9:00–14:00</li>
                             <li>Sun: by appointment</li>
                         </ul>
                     </div>
 
-                    <div className="rounded-xl p-6 border border-[color:var(--foreground)]/15 bg-white/50 dark:bg-white/5">
-                        <h3 className="font-serif text-2xl">
+                    <div className="border border-white/10 p-6">
+                        <h3 className="text-xl font-semibold text-[#d6ad63]">
                             Licensed & Insured
                         </h3>
-                        <p className="mt-2 opacity-80 text-sm">
+                        <p className="mt-4 text-sm leading-7 text-white/65">
                             Documentation available upon request.
                         </p>
                     </div>
-                </aside>
-            </section>
-
-            {/* CTA strip */}
-            <section className="border-t border-[color:var(--foreground)]/15">
-                <div className="mx-auto w-full max-w-5xl px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div>
-                        <p className="uppercase tracking-[0.2em] text-sm opacity-70">
-                            Free estimate
-                        </p>
-                        <h4 className="font-serif text-2xl">
-                            Ready to start your home project?
-                        </h4>
-                    </div>
-                    <a
-                        href={`tel:${phone}`}
-                        className="h-11 px-6 rounded-md bg-[color:var(--foreground)] text-[var(--background)] flex items-center justify-center"
-                    >
-                        Call now
-                    </a>
                 </div>
             </section>
         </main>

@@ -1,75 +1,68 @@
 @import "tailwindcss";
 
-  :root {
-  --background: #f5e8d9;
-  --foreground: #3f3a2e;
-  --foregroundHover: #71664e;
+:root {
+  --background: #0f1111;
+  --foreground: #f4f1eb;
+
+  --gold: #d6ad63;
+  --gold-hover: #f0c978;
+
+  --graphite: #101212;
+  --graphite-light: #1a1d1d;
+
+  --warm-light: #f4f1eb;
 }
 
-/* @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-} */
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #3f3a2e;
-    --foreground: #f5e8d9;
-  }
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
+/* Base */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-
-/* Акцент для підсвітки (світло-зелений) */
-:root {
-  --accent-zap: #baf7d0;
+/* Text selection */
+::selection {
+  background: var(--gold);
+  color: #000;
 }
 
-/* light green */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --accent-zap: #9fe9c1;
-  }
-
-  /* трохи темніший у dark */
+/* Better image rendering */
+img {
+  display: block;
+  max-width: 100%;
 }
 
-/* Базовий клас для “зигзаг-блискавки” */
-.zap {
-  position: relative;
-  isolation: isolate;
-  /* щоб псевдоелемент був під текстом */
+/* Links */
+a {
+  text-decoration: none;
 }
 
-/* Активний стан: малюємо блискавку поверх/під текст */
-.zap--active::after {
-  content: "";
-  position: absolute;
-  inset: 45% -6px auto -6px;
-  /* вертикальне розміщення смуги */
-  height: 10px;
-  /* товщина “перечеркування” */
-  background: var(--accent-zap);
-  z-index: -1;
-  transform: rotate(-8deg) skewX(-10deg);
-  border-radius: 2px;
-  /* Невеликий “зигзаг” через clip-path — виглядає як блискавка */
-  clip-path: polygon(0% 0%,
-      78% 0%,
-      70% 100%,
-      100% 100%,
-      22% 100%,
-      30% 0%);
+/* Buttons */
+button {
+  cursor: pointer;
 }
 
-/* Трохи тіні для кращого читання на контрасному фоні */
-.zap--active {
-  text-shadow: 0 0 1px rgba(0, 0, 0, .05);
+/* Optional scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3b3b3b;
 }

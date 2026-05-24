@@ -1,10 +1,10 @@
-// src/app/layout.tsx
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/context/themeContext';
 import Menu from '@/components/Menu/Menu';
+import Providers from './providers';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({
@@ -12,97 +12,86 @@ const geistMono = Geist_Mono({
     subsets: ['latin'],
 });
 
-/** =======================
- *  SEO / SOCIAL / ROBOTS
- *  ======================= */
 export const metadata: Metadata = {
     metadataBase: new URL('https://moliora.us'),
+
     title: {
-        default: 'mOliora — Home Services',
-        template: 'mOliora — %s',
+        default: 'Moliora Construction',
+        template: 'Moliora Construction | %s',
     },
+
     description:
-        'Reliable home improvement and repair in Minneapolis–St. Paul: drywall & painting, flooring, plumbing, electrical. Free estimates. Licensed & insured.',
+        'Windows, doors, remodeling and exterior construction services in Minneapolis–St. Paul, Minnesota.',
+
     keywords: [
-        'home services',
-        'home improvement',
-        'general contractor',
+        'construction company',
+        'window installation',
+        'door installation',
+        'deck repair',
         'remodeling',
-        'drywall',
-        'painting',
-        'flooring',
-        'plumbing',
-        'electrical',
+        'exterior services',
+        'general contractor',
         'Minneapolis',
         'St Paul',
         'Minnesota',
     ],
-    applicationName: 'mOliora',
-    authors: [{ name: 'mOliora Home Services' }],
+
+    applicationName: 'Moliora Construction',
+
+    authors: [{ name: 'Moliora Construction' }],
+
     alternates: {
         canonical: 'https://moliora.us/',
     },
+
     openGraph: {
         type: 'website',
         locale: 'en_US',
-        siteName: 'mOliora',
-        title: 'mOliora — Your Home Service Partner',
-        description:
-            'Trusted renovations and repairs in Minneapolis–St. Paul. Free estimates.',
+        siteName: 'Moliora Construction',
+        title: 'Moliora Construction',
+        description: 'Modern construction and exterior services in Minnesota.',
         url: 'https://moliora.us/',
         images: [
-            // Можеш пізніше покласти /public/og.png — поки що посилання валідне
             {
                 url: 'https://moliora.us/og.png',
                 width: 1200,
                 height: 630,
-                alt: 'mOliora — Home Services',
+                alt: 'Moliora Construction',
             },
         ],
     },
+
     twitter: {
         card: 'summary_large_image',
-        title: 'mOliora — Your Home Service Partner',
+        title: 'Moliora Construction',
         description:
-            'Reliable home improvement and repair in Minneapolis–St. Paul.',
+            'Modern construction and remodeling services in Minnesota.',
         images: ['https://moliora.us/og.png'],
     },
+
     robots: {
         index: true,
         follow: true,
-        googleBot: {
-            index: true,
-            follow: true,
-            'max-snippet': -1,
-            'max-image-preview': 'large',
-            'max-video-preview': -1,
-        },
     },
-    category: 'home services',
+
+    category: 'construction',
+
     icons: {
         icon: [
             { url: '/favicon.ico', sizes: 'any' },
             { url: '/icon.svg', type: 'image/svg+xml' },
         ],
-        apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
-        shortcut: ['/favicon.ico'],
     },
-    manifest: '/site.webmanifest',
 };
 
-/** =======================
- *  VIEWPORT / THEME COLOR
- *  ======================= */
 export const viewport: Viewport = {
+    width: 'device-width',
+    initialScale: 1,
     themeColor: [
         { media: '(prefers-color-scheme: light)', color: '#f5e8d9' },
         { media: '(prefers-color-scheme: dark)', color: '#3f3a2e' },
     ],
 };
-
-/** =======================
- *  ROOT LAYOUT (SSR COOKIE)
- *  ======================= */
 export default async function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -118,7 +107,7 @@ export default async function RootLayout({
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'HomeAndConstructionBusiness',
-        name: 'mOliora Home Services',
+        name: 'Moliora Construction',
         url: 'https://moliora.us',
         telephone: '+16124683176',
         email: 'wordisstuff@gmail.com',
@@ -134,19 +123,31 @@ export default async function RootLayout({
         makesOffer: [
             {
                 '@type': 'Offer',
-                itemOffered: { '@type': 'Service', name: 'Drywall & Painting' },
+                itemOffered: {
+                    '@type': 'Service',
+                    name: 'Window Installation',
+                },
             },
             {
                 '@type': 'Offer',
-                itemOffered: { '@type': 'Service', name: 'Flooring' },
+                itemOffered: {
+                    '@type': 'Service',
+                    name: 'Door Installation',
+                },
             },
             {
                 '@type': 'Offer',
-                itemOffered: { '@type': 'Service', name: 'Plumbing' },
+                itemOffered: {
+                    '@type': 'Service',
+                    name: 'Deck Repair',
+                },
             },
             {
                 '@type': 'Offer',
-                itemOffered: { '@type': 'Service', name: 'Electrical' },
+                itemOffered: {
+                    '@type': 'Service',
+                    name: 'Exterior Remodeling',
+                },
             },
         ],
     };
@@ -154,7 +155,7 @@ export default async function RootLayout({
     return (
         <html lang="en" className={initialTheme} suppressHydrationWarning>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} container mx-auto antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
                 id="top"
             >
                 {/* JSON-LD Schema.org */}
@@ -167,64 +168,13 @@ export default async function RootLayout({
                     }}
                 ></script>
                 {/* THEME PROVIDER + NAV */}
-                <ThemeProvider>
-                    <header className="container">
+                <Providers>
+                    <ThemeProvider>
                         <Menu />
-                    </header>
-                    {children}
-                </ThemeProvider>
+                        {children}
+                    </ThemeProvider>
+                </Providers>
             </body>
         </html>
     );
 }
-
-//************************************* */
-
-// import type { Metadata } from 'next';
-// import { Geist, Geist_Mono } from 'next/font/google';
-// import './globals.css';
-// import { ThemeProvider } from '@/components/context/themeContext';
-// import Menu from '@/components/Menu/Menu';
-// import { cookies } from 'next/headers';
-
-// const geistSans = Geist({
-//     variable: '--font-geist-sans',
-//     subsets: ['latin'],
-// });
-
-// const geistMono = Geist_Mono({
-//     variable: '--font-geist-mono',
-//     subsets: ['latin'],
-// });
-
-// export const metadata: Metadata = {
-//     title: 'Create Next App',
-//     description: 'Generated by create next app',
-// };
-
-// export default function RootLayout({
-//     children,
-// }: Readonly<{
-//     children: React.ReactNode;
-// }>) {
-//     const themeCookie = cookies().get('theme')?.value as
-//         | 'light'
-//         | 'dark'
-//         | undefined;
-//     const initialTheme = themeCookie ?? 'light';
-
-//     return (
-//         <html lang="en" className={initialTheme}>
-//             <body
-//                 className={`${geistSans.variable} ${geistMono.variable} container mx-auto antialiased`}
-//             >
-//                 <ThemeProvider>
-//                     <header className="container">
-//                         <Menu />
-//                     </header>
-//                     {children}
-//                 </ThemeProvider>
-//             </body>
-//         </html>
-//     );
-// }
