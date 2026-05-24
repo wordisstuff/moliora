@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useEffect, useState } from 'react';
 
 const ContactsInfo = () => {
@@ -6,37 +7,34 @@ const ContactsInfo = () => {
     const [phone, setPhone] = useState('');
 
     useEffect(() => {
-        const emailUser = 'support';
-        const emailDomain = 'moliora.us';
-        setEmail(`${emailUser}@${emailDomain}`);
-
-        const phoneCode = '+1';
-        const phoneNumber = '(612) 468-3176';
-        setPhone(`${phoneCode} ${phoneNumber}`);
+        setEmail('support@moliora.us');
+        setPhone('(612) 468-3176');
     }, []);
 
     return (
-        <ul className="mt-3 space-y-2">
+        <ul className="space-y-3">
             <li>
-                <span className="opacity-70">Phone:</span>{' '}
+                <span className="text-white/40">Phone:</span>{' '}
                 <a
-                    className="underline-offset-2 hover:underline"
-                    href={`tel:${phone}`}
+                    className="text-white/75 underline-offset-4 hover:text-white hover:underline"
+                    href="tel:+16124683176"
                 >
                     {phone}
                 </a>
             </li>
+
             <li>
-                <span className="opacity-70">Email:</span>{' '}
+                <span className="text-white/40">Email:</span>{' '}
                 <a
-                    className="underline-offset-2 hover:underline"
+                    className="text-white/75 underline-offset-4 hover:text-white hover:underline"
                     href={`mailto:${email}`}
                 >
                     {email}
                 </a>
             </li>
+
             <li>
-                <span className="opacity-70">Service area:</span>{' '}
+                <span className="text-white/40">Service area:</span>{' '}
                 Minneapolis–St. Paul, MN
             </li>
         </ul>
