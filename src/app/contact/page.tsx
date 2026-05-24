@@ -207,10 +207,10 @@ export default function ContactPage() {
                         <p>
                             <span className="text-[#d6ad63]">Phone:</span>{' '}
                             <a
-                                href="tel:+16124683176"
+                                href={`tel:${phone}`}
                                 className="hover:text-white"
                             >
-                                (612) 468-3176
+                                {phone}
                             </a>
                         </p>
 
