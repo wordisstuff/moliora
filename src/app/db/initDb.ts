@@ -37,6 +37,13 @@ export async function initMongoDB(): Promise<Mongoose> {
         });
     }
 
-    cached.conn = await cached.promise;
-    return cached.conn;
+    try {
+        cached.conn = await cached.promise;
+        return cached.conn;
+    } catch (error) {
+        // Do not leave a rejected promise in a warm serverless instance. A
+        // transient connection failure must be retryable on the next request.
+        cached.promise = null;
+        throw error;
+    }
 }
