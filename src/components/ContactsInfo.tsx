@@ -1,25 +1,15 @@
-'use client';
-
-import React, { useEffect, useState } from 'react';
+import { email, phoneDisplay, phoneHref, serviceArea } from '@/config/company';
 
 const ContactsInfo = () => {
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-
-    useEffect(() => {
-        setEmail('support@moliora.us');
-        setPhone('(612) 468-3176');
-    }, []);
-
     return (
         <ul className="space-y-3">
             <li>
                 <span className="text-white/40">Phone:</span>{' '}
                 <a
                     className="text-white/75 underline-offset-4 hover:text-white hover:underline"
-                    href="tel:+16124683176"
+                    href={phoneHref}
                 >
-                    {phone}
+                    {phoneDisplay}
                 </a>
             </li>
 
@@ -35,7 +25,7 @@ const ContactsInfo = () => {
 
             <li>
                 <span className="text-white/40">Service area:</span>{' '}
-                Minneapolis–St. Paul, MN
+                {serviceArea}
             </li>
         </ul>
     );
