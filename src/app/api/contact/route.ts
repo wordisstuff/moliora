@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { mongo } from 'mongoose';
 import { initMongoDB } from '@/app/db/initDb';
 import { ContactRequestModel } from '@/app/db/models/ContactRequest';
 import { htmlTemplate } from '@/app/constants/index.js';
@@ -77,9 +78,42 @@ function invalid(error: string) {
     return NextResponse.json({ success: false, error }, { status: 400 });
 }
 
+type SafeFailureDetails = Record<
+    string,
+    string | number | readonly string[]
+>;
+
+function duplicateKeyIndexName(error: mongo.MongoServerError) {
+    // The driver exposes keyPattern but not a dedicated index-name property for
+    // every E11000 response. Extract only the index identifier from the server
+    // message; never log the rest of that message because it contains keyValue.
+    const message = typeof error.message === 'string' ? error.message : '';
+    return message.match(/\bindex:\s+([^\s]+)\s+dup key\b/)?.[1];
+}
+
 function logFailure(stage: string, error?: unknown, id?: unknown) {
-    const details: Record<string, string> = {};
+    const details: SafeFailureDetails = {};
     if (error instanceof Error) details.errorType = error.name;
+    if (error instanceof mongo.MongoServerError) {
+        if (typeof error.code === 'number') details.code = error.code;
+        if (typeof error.codeName === 'string') {
+            details.codeName = error.codeName;
+        }
+
+        const keyPattern = error.keyPattern;
+        if (
+            keyPattern &&
+            typeof keyPattern === 'object' &&
+            !Array.isArray(keyPattern)
+        ) {
+            details.keyFields = Object.keys(keyPattern).sort();
+        }
+
+        if (error.code === 11000) {
+            const index = duplicateKeyIndexName(error);
+            if (index) details.index = index;
+        }
+    }
     if (id != null) details.leadId = String(id);
     console.error(stage, details);
 }

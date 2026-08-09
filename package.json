@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "contact-db:audit": "node scripts/contact-request-index-audit.mjs",
+    "contact-db:drop-legacy-email-index": "node scripts/contact-request-index-audit.mjs --drop-legacy-email-index"
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.927.0",
