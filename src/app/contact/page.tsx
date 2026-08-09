@@ -1,23 +1,25 @@
 'use client';
-import { useEffect, useRef, useState, useTransition } from 'react';
-import Link from 'next/link';
-import ContactsInfo from '@/components/ContactsInfo';
 
-/** ---------- draft helpers ---------- */
+import Link from 'next/link';
+import { useEffect, useRef, useState, useTransition } from 'react';
+import ContactsInfo from '@/components/ContactsInfo';
+import { email, phoneDisplay, phoneHref, serviceArea } from '@/config/company';
+import { CONTACT_SERVICES } from '@/config/contact';
+
 type Draft = {
+    service?: string;
+    message?: string;
     name?: string;
     phone?: string;
-    email?: string;
     location?: string;
-    service?: string;
-    budget?: string;
-    message?: string;
+    email?: string;
 };
 
 type ApiResponse = {
     success: boolean;
     error?: string;
     id?: string;
+    notificationPending?: boolean;
 };
 
 const DRAFT_KEY = 'contactDraft_v1';
@@ -30,300 +32,348 @@ function readDraft(): Draft {
         return {};
     }
 }
-function writeDraft(d: Draft) {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
-}
-function clearDraft() {
-    localStorage.removeItem(DRAFT_KEY);
+
+function fieldClass() {
+    return 'min-h-12 w-full border border-white/15 bg-black/30 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#d6ad63] focus:ring-2 focus:ring-[#d6ad63]/30';
 }
 
 export default function ContactPage() {
     const formRef = useRef<HTMLFormElement>(null);
+    const draftTimer = useRef<number | null>(null);
     const [toast, setToast] = useState<{
         type: 'success' | 'error' | 'info';
         msg: string;
     } | null>(null);
     const [isPending, startTransition] = useTransition();
     const [consent, setConsent] = useState(false);
+    const [service, setService] = useState('');
 
-    /** Відновлюємо згоду і чернетку з localStorage при відкритті */
     useEffect(() => {
-        const agreed = localStorage.getItem(CONSENT_KEY) === 'true';
-        if (agreed) setConsent(true);
-
+        setConsent(localStorage.getItem(CONSENT_KEY) === 'true');
         const draft = readDraft();
-        const f = formRef.current;
-        if (!f) return;
+        if (
+            draft.service &&
+            CONTACT_SERVICES.includes(
+                draft.service as (typeof CONTACT_SERVICES)[number],
+            )
+        ) {
+            setService(draft.service);
+        }
 
-        (
-            [
-                'name',
-                'phone',
-                'email',
-                'location',
-                'service',
-                'budget',
-                'message',
-            ] as const
-        ).forEach(name => {
-            const el = f.elements.namedItem(name) as
-                | HTMLInputElement
-                | HTMLTextAreaElement
-                | HTMLSelectElement
-                | null;
-            if (el && draft[name] != null) {
-                el.value = draft[name] as string;
-            }
-        });
+        const form = formRef.current;
+        if (!form) return;
+        (['message', 'name', 'phone', 'location', 'email'] as const).forEach(
+            name => {
+                const element = form.elements.namedItem(name) as
+                    | HTMLInputElement
+                    | HTMLTextAreaElement
+                    | null;
+                if (element && draft[name] != null) {
+                    element.value = draft[name] as string;
+                }
+            },
+        );
     }, []);
 
-    /** Збереження форми (debounce 250ms) */
-    const draftTimer = useRef<number | null>(null);
     const saveDraft = () => {
-        const f = formRef.current;
-        if (!f) return;
-        const d: Draft = {
-            name:
-                (f.elements.namedItem('name') as HTMLInputElement)?.value || '',
-            phone:
-                (f.elements.namedItem('phone') as HTMLInputElement)?.value ||
-                '',
-            email:
-                (f.elements.namedItem('email') as HTMLInputElement)?.value ||
-                '',
-            location:
-                (f.elements.namedItem('location') as HTMLInputElement)?.value ||
-                '',
-            service:
-                (f.elements.namedItem('service') as HTMLSelectElement)?.value ||
-                '',
-            budget:
-                (f.elements.namedItem('budget') as HTMLSelectElement)?.value ||
-                '',
-            message:
-                (f.elements.namedItem('message') as HTMLTextAreaElement)
-                    ?.value || '',
-        };
-        writeDraft(d);
+        const form = formRef.current;
+        if (!form) return;
+        const value = (name: string) =>
+            (
+                form.elements.namedItem(name) as
+                    | HTMLInputElement
+                    | HTMLTextAreaElement
+            )?.value || '';
+        const selectedService = (
+            form.elements.namedItem('service') as RadioNodeList | null
+        )?.value;
+
+        localStorage.setItem(
+            DRAFT_KEY,
+            JSON.stringify({
+                service: selectedService || '',
+                message: value('message'),
+                name: value('name'),
+                phone: value('phone'),
+                location: value('location'),
+                email: value('email'),
+            } satisfies Draft),
+        );
     };
+
     const handleAnyChange = () => {
         if (draftTimer.current) window.clearTimeout(draftTimer.current);
         draftTimer.current = window.setTimeout(saveDraft, 250);
     };
 
-    /** Згода на контакт */
-    const handleConsentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.checked;
+    const handleConsentChange = (
+        event: React.ChangeEvent<HTMLInputElement>,
+    ) => {
+        const value = event.target.checked;
         setConsent(value);
         localStorage.setItem(CONSENT_KEY, value ? 'true' : 'false');
     };
 
-    /** Надсилання форми */
     async function handleSubmit(formData: FormData) {
-        setToast({ type: 'info', msg: 'Sending…' });
+        setToast({ type: 'info', msg: 'Sending your request…' });
 
-        // honeypot
         if ((formData.get('website') as string | null)?.trim()) {
-            setToast({ type: 'error', msg: 'Spam detected.' });
+            setToast({ type: 'error', msg: 'Unable to submit request.' });
             return;
         }
 
-        // Готуємо "чистий" обʼєкт для JSON
-        const payload: Record<string, string> = {};
+        const payload: Record<string, string | boolean> = {};
         formData.forEach((value, key) => {
-            // у нас тільки текстові поля, але на всяк випадок:
-            if (typeof value === 'string') {
-                payload[key] = value;
-            }
+            if (typeof value === 'string') payload[key] = value;
         });
+        payload.consent = formData.get('consent') === 'true';
 
         startTransition(async () => {
             try {
-                const res = await fetch('/api/contact', {
+                const response = await fetch('/api/contact', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                 });
+                const data = (await response.json()) as ApiResponse;
 
-                const data = (await res.json()) as ApiResponse;
-
-                if (!res.ok || !data.success) {
+                if (!response.ok || !data.success) {
                     setToast({
                         type: 'error',
                         msg:
-                            data.error ??
-                            `❌ Failed to send message (status ${res.status}).`,
+                            data.error ||
+                            'We could not submit your request. Please check the form and try again.',
                     });
                     return;
                 }
 
-                // успіх
                 setToast({
                     type: 'success',
-                    msg: '✅ Message sent successfully! We’ll get back within 1 business day.',
+                    msg: 'Request received! We’ll get back to you within 1 business day.',
                 });
-
-                clearDraft();
-                localStorage.setItem('privacyAgreed', 'false');
+                localStorage.removeItem(DRAFT_KEY);
+                localStorage.setItem(CONSENT_KEY, 'false');
                 setConsent(false);
+                setService('');
                 formRef.current?.reset();
-            } catch (e) {
-                console.error('Contact form error:', e);
+            } catch (error) {
+                console.error('Contact form error:', error);
                 setToast({
                     type: 'error',
-                    msg: '❌ Unexpected error. Please try again later.',
+                    msg: 'Unexpected error. Please call us or try again later.',
                 });
             }
         });
     }
-    const [phone, setPhone] = useState('');
 
-    useEffect(() => {
-        const phoneCode = '+1';
-        const phoneNumber = '(612) 468-3176';
-        setPhone(`${phoneCode} ${phoneNumber}`);
-    }, []);
+    const focusForm = () => {
+        window.requestAnimationFrame(() => {
+            document.getElementById('estimate-form-heading')?.focus();
+        });
+    };
 
     return (
-        <main className="min-h-screen bg-[#0f1111] pt-20 text-white">
-            <section className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-2">
+        <main className="min-h-screen bg-[#0f1111] pb-28 pt-20 text-white md:pb-0">
+            <section className="mx-auto grid max-w-7xl gap-7 px-5 py-10 sm:px-6 sm:py-14 lg:grid-cols-2 lg:gap-12 lg:py-20">
                 <div>
                     <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#d6ad63]">
                         Contact Moliora
                     </p>
-
-                    <h1 className="mt-5 text-5xl font-semibold leading-tight sm:text-6xl">
+                    <h1 className="mt-3 text-4xl font-semibold leading-tight sm:mt-5 sm:text-5xl lg:text-6xl">
                         Request Your Free Estimate
                     </h1>
-
-                    <p className="mt-6 max-w-xl text-lg leading-8 text-white/70">
-                        Tell us about your project. We’ll review the details and
-                        get back to you with the next steps.
+                    <p className="mt-4 max-w-xl text-base leading-7 text-white/70 sm:mt-6 sm:text-lg sm:leading-8">
+                        Tell us what you need. We’ll review your project and
+                        contact you with the next steps.
                     </p>
 
-                    <div className="mt-10 space-y-5 text-white/75">
+                    <div className="mt-6 border-l-2 border-[#d6ad63] bg-white/[0.04] px-4 py-3 sm:mt-8">
+                        <p className="text-sm font-semibold text-white">
+                            Prefer to talk?
+                        </p>
+                        <a
+                            href={phoneHref}
+                            className="mt-1 inline-flex min-h-11 items-center text-lg font-semibold text-[#d6ad63] outline-none hover:text-[#f0c978] focus-visible:ring-2 focus-visible:ring-[#d6ad63]"
+                        >
+                            Call us: {phoneDisplay}
+                        </a>
+                    </div>
+
+                    <div className="mt-6 hidden space-y-3 text-sm text-white/65 lg:block">
                         <p>
-                            <span className="text-[#d6ad63]">Phone:</span>{' '}
+                            Email:{' '}
                             <a
-                                href={`tel:${phone}`}
+                                href={`mailto:${email}`}
                                 className="hover:text-white"
                             >
-                                {phone}
+                                {email}
                             </a>
                         </p>
-
-                        <p>
-                            <span className="text-[#d6ad63]">Email:</span>{' '}
-                            <a
-                                href="mailto:support@moliora.us"
-                                className="hover:text-white"
-                            >
-                                support@moliora.us
-                            </a>
-                        </p>
-
-                        <p>
-                            <span className="text-[#d6ad63]">
-                                Service Area:
-                            </span>{' '}
-                            Minneapolis–St. Paul, MN
-                        </p>
+                        <p>Service Area: {serviceArea}</p>
                     </div>
                 </div>
 
                 <form
+                    id="estimate-form"
                     ref={formRef}
                     onChange={handleAnyChange}
-                    onSubmit={e => {
-                        e.preventDefault();
-                        const fd = new FormData(e.currentTarget);
-                        handleSubmit(fd);
+                    onSubmit={event => {
+                        event.preventDefault();
+                        handleSubmit(new FormData(event.currentTarget));
                     }}
-                    method="POST"
-                    className="border border-white/10 bg-white/[0.03] p-6 shadow-2xl"
+                    className="scroll-mt-24 border border-white/10 bg-white/[0.03] p-5 shadow-2xl sm:p-6"
                 >
-                    <div aria-live="polite" className="sr-only">
-                        {toast?.msg}
+                    <h2
+                        id="estimate-form-heading"
+                        tabIndex={-1}
+                        className="text-2xl font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[#d6ad63]"
+                    >
+                        Tell us about your project
+                    </h2>
+                    <p className="mt-1 text-sm text-white/55">
+                        Required fields are marked with an asterisk.
+                    </p>
+
+                    <div aria-live="polite" aria-atomic="true">
+                        {toast && (
+                            <div
+                                role={
+                                    toast.type === 'error' ? 'alert' : 'status'
+                                }
+                                className={`mt-4 border p-3 text-sm ${
+                                    toast.type === 'success'
+                                        ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                                        : toast.type === 'error'
+                                          ? 'border-rose-400/40 bg-rose-500/10 text-rose-200'
+                                          : 'border-[#d6ad63]/40 bg-[#d6ad63]/10 text-[#f0c978]'
+                                }`}
+                            >
+                                {toast.msg}
+                            </div>
+                        )}
                     </div>
 
-                    {toast && (
-                        <div
-                            className={`mb-5 border p-4 text-sm ${
-                                toast.type === 'success'
-                                    ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
-                                    : toast.type === 'error'
-                                      ? 'border-rose-400/40 bg-rose-500/10 text-rose-200'
-                                      : 'border-[#d6ad63]/40 bg-[#d6ad63]/10 text-[#f0c978]'
-                            }`}
-                        >
-                            {toast.msg}
+                    <fieldset className="mt-5">
+                        <legend className="text-sm font-semibold text-white">
+                            What can we help you with?{' '}
+                            <span aria-hidden="true">*</span>
+                        </legend>
+                        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-2">
+                            {CONTACT_SERVICES.map(option => (
+                                <label
+                                    key={option}
+                                    className={`flex min-h-12 cursor-pointer items-center border px-3 py-2.5 text-sm font-medium transition focus-within:ring-2 focus-within:ring-[#d6ad63] ${
+                                        service === option
+                                            ? 'border-[#d6ad63] bg-[#d6ad63]/15 text-[#f0c978]'
+                                            : 'border-white/15 bg-black/30 text-white/75 hover:border-white/35'
+                                    }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="service"
+                                        value={option}
+                                        checked={service === option}
+                                        onChange={() => setService(option)}
+                                        required
+                                        className="mr-2 accent-[#d6ad63]"
+                                    />
+                                    <span>{option}</span>
+                                </label>
+                            ))}
                         </div>
-                    )}
+                    </fieldset>
 
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <input
-                            name="name"
+                    <div className="mt-5">
+                        <label
+                            htmlFor="message"
+                            className="text-sm font-semibold"
+                        >
+                            Tell us about your project{' '}
+                            <span aria-hidden="true">*</span>
+                        </label>
+                        <textarea
+                            id="message"
+                            name="message"
+                            rows={4}
+                            maxLength={4000}
                             required
-                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
-                            placeholder="Full Name"
-                        />
-
-                        <input
-                            name="phone"
-                            inputMode="tel"
-                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
-                            placeholder="Phone Number"
-                        />
-
-                        <input
-                            name="email"
-                            type="email"
-                            required
-                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
-                            placeholder="Email Address"
-                        />
-
-                        <input
-                            name="location"
-                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
-                            placeholder="City / ZIP"
+                            className={`${fieldClass()} mt-2 resize-y`}
+                            placeholder="What would you like to have done?"
                         />
                     </div>
 
-                    <div className="mt-5 grid gap-5 md:grid-cols-2">
-                        <select
-                            name="service"
-                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none focus:border-[#d6ad63]"
-                        >
-                            <option>Window Installation</option>
-                            <option>Door Installation</option>
-                            <option>Deck Repair</option>
-                            <option>Remodeling</option>
-                            <option>Exterior Services</option>
-                            <option>Handyman Services</option>
-                            <option>Other</option>
-                        </select>
-
-                        <select
-                            name="budget"
-                            className="border border-white/10 bg-black/30 px-4 py-4 text-white outline-none focus:border-[#d6ad63]"
-                        >
-                            <option>Under $1,000</option>
-                            <option>$1,000 – $5,000</option>
-                            <option>$5,000 – $15,000</option>
-                            <option>$15,000+</option>
-                        </select>
+                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label
+                                htmlFor="name"
+                                className="text-sm font-semibold"
+                            >
+                                Name <span aria-hidden="true">*</span>
+                            </label>
+                            <input
+                                id="name"
+                                name="name"
+                                autoComplete="name"
+                                maxLength={120}
+                                required
+                                className={`${fieldClass()} mt-2`}
+                            />
+                        </div>
+                        <div>
+                            <label
+                                htmlFor="phone"
+                                className="text-sm font-semibold"
+                            >
+                                Phone <span aria-hidden="true">*</span>
+                            </label>
+                            <input
+                                id="phone"
+                                name="phone"
+                                type="tel"
+                                inputMode="tel"
+                                autoComplete="tel"
+                                maxLength={30}
+                                required
+                                className={`${fieldClass()} mt-2`}
+                                placeholder="(612) 555-0123"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                htmlFor="location"
+                                className="text-sm font-semibold"
+                            >
+                                City or ZIP <span aria-hidden="true">*</span>
+                            </label>
+                            <input
+                                id="location"
+                                name="location"
+                                autoComplete="postal-code"
+                                maxLength={120}
+                                required
+                                className={`${fieldClass()} mt-2`}
+                            />
+                        </div>
+                        <div>
+                            <label
+                                htmlFor="email"
+                                className="text-sm font-semibold"
+                            >
+                                Email{' '}
+                                <span className="font-normal text-white/55">
+                                    (optional)
+                                </span>
+                            </label>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                maxLength={254}
+                                className={`${fieldClass()} mt-2`}
+                            />
+                        </div>
                     </div>
-
-                    <textarea
-                        name="message"
-                        rows={6}
-                        required
-                        className="mt-5 w-full border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-white/35 focus:border-[#d6ad63]"
-                        placeholder="Tell us about the scope, timeline, and any photos/links…"
-                    />
 
                     <input
                         type="text"
@@ -334,62 +384,43 @@ export default function ContactPage() {
                         aria-hidden="true"
                     />
 
-                    <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-white/65">
+                    <div className="mt-5 flex items-start gap-3 text-sm leading-6 text-white/70">
                         <input
+                            id="consent"
+                            name="consent"
                             type="checkbox"
+                            value="true"
                             checked={consent}
                             onChange={handleConsentChange}
-                            required={!consent}
-                            className="mt-1"
+                            required
+                            className="mt-1 size-5 shrink-0 accent-[#d6ad63] focus-visible:ring-2 focus-visible:ring-[#d6ad63]"
                         />
-                        <span>
+                        <label htmlFor="consent">
                             I agree to be contacted about my request.
                             <Link
                                 href="/policy"
                                 onClick={saveDraft}
-                                className="ml-1 text-[#d6ad63] hover:underline"
+                                className="ml-1 text-[#d6ad63] underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-[#d6ad63]"
                             >
                                 Privacy Policy
                             </Link>
-                        </span>
-                    </label>
+                        </label>
+                    </div>
 
                     <button
                         type="submit"
                         disabled={isPending}
-                        className="mt-7 inline-flex items-center gap-3 bg-[#d6ad63] px-8 py-4 text-sm font-bold uppercase tracking-wider text-black transition hover:bg-[#f0c978] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-3 bg-[#d6ad63] px-6 py-3 text-sm font-bold uppercase tracking-wider text-black transition hover:bg-[#f0c978] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f1111] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {isPending && (
-                            <svg
-                                viewBox="0 0 24 24"
-                                className="size-5 animate-spin"
-                                fill="none"
-                                stroke="currentColor"
-                            >
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="9"
-                                    strokeWidth="2"
-                                    className="opacity-25"
-                                />
-                                <path
-                                    d="M21 12a9 9 0 0 1-9 9"
-                                    strokeWidth="2"
-                                    className="opacity-80"
-                                />
-                            </svg>
-                        )}
-                        {isPending ? 'Sending…' : 'Send Request'}
+                        {isPending ? 'Sending…' : 'Request Free Estimate'}
                     </button>
-
-                    <p className="mt-3 text-xs text-white/45">
+                    <p className="mt-3 text-center text-xs text-white/45">
                         Response within 1 business day.
                     </p>
                 </form>
             </section>
 
-            <section className="border-t border-white/10 bg-[#101212] px-6 py-14">
+            <section className="border-t border-white/10 bg-[#101212] px-6 py-12">
                 <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-3">
                     <div className="border border-white/10 p-6">
                         <h3 className="text-xl font-semibold text-[#d6ad63]">
@@ -399,7 +430,6 @@ export default function ContactPage() {
                             <ContactsInfo />
                         </div>
                     </div>
-
                     <div className="border border-white/10 p-6">
                         <h3 className="text-xl font-semibold text-[#d6ad63]">
                             Hours
@@ -410,10 +440,9 @@ export default function ContactPage() {
                             <li>Sun: by appointment</li>
                         </ul>
                     </div>
-
                     <div className="border border-white/10 p-6">
                         <h3 className="text-xl font-semibold text-[#d6ad63]">
-                            Licensed & Insured
+                            Licensed &amp; Insured
                         </h3>
                         <p className="mt-4 text-sm leading-7 text-white/65">
                             Documentation available upon request.
@@ -421,6 +450,30 @@ export default function ContactPage() {
                     </div>
                 </div>
             </section>
+
+            <nav
+                aria-label="Contact actions"
+                className="fixed inset-x-0 bottom-0 z-40 border-t border-white/15 bg-[#0b0c0c]/95 px-3 pt-3 backdrop-blur md:hidden"
+                style={{
+                    paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+                }}
+            >
+                <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
+                    <a
+                        href={phoneHref}
+                        className="flex min-h-12 items-center justify-center border border-[#d6ad63] text-sm font-bold tracking-wider text-[#d6ad63] focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                        CALL NOW
+                    </a>
+                    <a
+                        href="#estimate-form"
+                        onClick={focusForm}
+                        className="flex min-h-12 items-center justify-center bg-[#d6ad63] text-sm font-bold tracking-wider text-black focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                        FREE ESTIMATE
+                    </a>
+                </div>
+            </nav>
         </main>
     );
 }

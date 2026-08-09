@@ -5,6 +5,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/context/themeContext';
 import Menu from '@/components/Menu/Menu';
 import Providers from './providers';
+import { email, phoneE164 } from '@/config/company';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({
@@ -109,8 +110,8 @@ export default async function RootLayout({
         '@type': 'HomeAndConstructionBusiness',
         name: 'Moliora Construction',
         url: 'https://moliora.us',
-        telephone: '+16124683176',
-        email: 'wordisstuff@gmail.com',
+        telephone: phoneE164,
+        email,
         areaServed: ['Minneapolis', 'St. Paul', 'Minnesota'],
         address: {
             '@type': 'PostalAddress',

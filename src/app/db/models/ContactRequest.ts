@@ -5,11 +5,13 @@ const contactRequestSchema = new Schema(
     {
         name: { type: String, required: true },
         phone: { type: String, default: '' },
-        email: { type: String, required: true },
+        email: { type: String, default: '' },
         location: { type: String, default: '' },
         service: { type: String, default: '' },
-        budget: { type: String, default: '' },
         message: { type: String, required: true },
+        consent: { type: Boolean, default: false },
+        consentTimestamp: { type: Date },
+        consentVersion: { type: String, default: '' },
 
         // технічні поля, якщо захочеш використовувати:
         ip: { type: String, default: '' },

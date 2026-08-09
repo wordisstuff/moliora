@@ -36,11 +36,10 @@ const ADMIN_HTML = `<!doctype html>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf6ee;border:1px solid #e9dac8;border-radius:10px;">
             <tr><td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;font-size:14px;">
               <strong style="display:inline-block;width:110px;">Name:</strong> {{name}}<br>
-              <strong style="display:inline-block;width:110px;">Email:</strong> {{email}}<br>
-              <strong style="display:inline-block;width:110px;">Phone:</strong> {{phone}}<br>
+              <strong style="display:inline-block;width:110px;color:#9a6b17;">Phone:</strong> <strong>{{phone}}</strong><br>
+              {{emailRow}}
               <strong style="display:inline-block;width:110px;">City / ZIP:</strong> {{location}}<br>
-              <strong style="display:inline-block;width:110px;">Service:</strong> {{service}}<br>
-              <strong style="display:inline-block;width:110px;">Budget:</strong> {{budget}}
+              <strong style="display:inline-block;width:110px;">Service:</strong> {{service}}
             </td></tr>
           </table>
         </td></tr>
@@ -49,7 +48,7 @@ const ADMIN_HTML = `<!doctype html>
           <div style="font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;background:#fff;border:1px solid #e9dac8;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;">{{message}}</div>
         </td></tr>
         <tr><td style="padding:16px 24px 24px 24px;text-align:center;">
-          <a href="mailto:{{email}}" style="display:inline-block;background:#3f3a2e;color:#f5e8d9;text-decoration:none;padding:12px 18px;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;">Reply to {{name}}</a>
+          {{replyAction}}
         </td></tr>
         <tr><td style="background:#f5e8d9;padding:14px 24px;text-align:center;border-top:1px solid #e9dac8;">
           <p style="margin:0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.7;font-size:12px;">© {{year}} mOliora Home Services • Minneapolis–St. Paul, MN</p>
@@ -63,11 +62,10 @@ const ADMIN_TEXT = `
 New Contact Request
 
 Name: {{name}}
-Email: {{email}}
 Phone: {{phone}}
+{{emailText}}
 City / ZIP: {{location}}
 Service: {{service}}
-Budget: {{budget}}
 
 Message:
 {{message}}
@@ -90,18 +88,14 @@ const CLIENT_HTML = `<!doctype html>
           <h1 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#3f3a2e;">Thank you, {{name}}!</h1>
           <p style="margin:12px 0 20px 0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.9;font-size:15px;line-height:1.6;">
             We’ve received your message and our team will get back to you within one business day.
-            Below is a copy of your request for your records.
+            We will review the project details and contact you within one business day.
           </p>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf6ee;border:1px solid #e9dac8;border-radius:10px;">
             <tr><td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;font-size:14px;">
               <strong style="display:inline-block;width:110px;">Service:</strong> {{service}}<br>
-              <strong style="display:inline-block;width:110px;">Budget:</strong> {{budget}}<br>
-              <strong style="display:inline-block;width:110px;">City / ZIP:</strong> {{location}}<br>
-              <strong style="display:inline-block;width:110px;">Phone:</strong> {{phone}}
+              <strong style="display:inline-block;width:110px;">City / ZIP:</strong> {{location}}
             </td></tr>
           </table>
-          <h2 style="margin:24px 0 8px 0;font-family:Georgia,serif;font-size:18px;color:#3f3a2e;">Your Message</h2>
-          <div style="font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;border:1px solid #e9dac8;border-radius:10px;padding:14px;font-size:14px;line-height:1.6;">{{message}}</div>
           <p style="margin-top:32px;text-align:center;">
             <a href="mailto:${
                 process.env.ADMIN_TO ?? 'wordisstuff@gmail.com'

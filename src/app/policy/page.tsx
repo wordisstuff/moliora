@@ -1,18 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { email } from '@/config/company';
 
 export default function PrivacyPolicy() {
     const router = useRouter();
 
-    const [email, setEmail] = useState('');
-
-    useEffect(() => {
-        const emailUser = 'support';
-        const emailDomain = 'moliora.us';
-        setEmail(`${emailUser}@${emailDomain}`);
-    }, []);
     const handleAgree = () => {
         // зберігаємо “згоду” в localStorage (опціонально)
         localStorage.setItem('privacyAgreed', 'true');
@@ -34,7 +27,10 @@ export default function PrivacyPolicy() {
                     is used solely to respond to your inquiry.
                 </p>
                 <p className="mb-4 leading-relaxed">
-                    We do not store or share your data with third parties. By
+                    We store the information you submit so we can review and
+                    respond to your request. We may also store basic technical
+                    request information, such as your IP address and browser
+                    user agent, for security and operational purposes. By
                     proceeding, you consent to us contacting you regarding your
                     request.
                 </p>
@@ -49,8 +45,7 @@ export default function PrivacyPolicy() {
                     <strong>not use cookies or tracking technologies</strong> on
                     this website. We do not collect analytical, advertising, or
                     profiling data. Any information you provide through our
-                    contact form is used solely to respond to your inquiry and
-                    is not stored or shared beyond that purpose.
+                    contact form is used to respond to and manage your inquiry.
                 </p>
 
                 {/* 🇺🇦 Ukrainian version (commented out for now)
@@ -66,7 +61,7 @@ export default function PrivacyPolicy() {
                 <p className="leading-relaxed">
                     If you have any questions, please contact us at{' '}
                     <a
-                        href={email}
+                        href={`mailto:${email}`}
                         className="underline hover:text-[var(--accent-zap)]"
                     >
                         {email}
