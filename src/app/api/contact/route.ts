@@ -77,12 +77,29 @@ function invalid(error: string) {
     return NextResponse.json({ success: false, error }, { status: 400 });
 }
 
+function logFailure(stage: string, error?: unknown, id?: unknown) {
+    const details: Record<string, string> = {};
+    if (error instanceof Error) details.errorType = error.name;
+    if (id != null) details.leadId = String(id);
+    console.error(stage, details);
+}
+
 export async function POST(req: NextRequest) {
+    let body: ContactPayload;
     try {
-        const body = (await req.json()) as ContactPayload;
+        body = (await req.json()) as ContactPayload;
+    } catch (error) {
+        logFailure('contact.request_parse_failed', error);
+        return invalid('Unable to read the request.');
+    }
+
+    try {
         const website = text(body.website);
 
-        if (website) return invalid('Unable to submit request.');
+        if (website) {
+            logFailure('contact.validation_failed');
+            return invalid('Unable to submit request.');
+        }
 
         const name = text(body.name);
         const phoneInput = text(body.phone);
@@ -93,9 +110,11 @@ export async function POST(req: NextRequest) {
         const consent = body.consent === true || body.consent === 'true';
 
         if (!name || !phoneInput || !location || !service || !message) {
+            logFailure('contact.validation_failed');
             return invalid('Please complete all required fields.');
         }
         if (!consent) {
+            logFailure('contact.validation_failed');
             return invalid('Please agree to be contacted about your request.');
         }
 
@@ -109,6 +128,7 @@ export async function POST(req: NextRequest) {
         })) {
             const limit = LIMITS[field as keyof typeof LIMITS];
             if (value.length > limit) {
+                logFailure('contact.validation_failed');
                 return invalid(`${field} is too long.`);
             }
         }
@@ -118,19 +138,33 @@ export async function POST(req: NextRequest) {
                 service as (typeof CONTACT_SERVICES)[number],
             )
         ) {
+            logFailure('contact.validation_failed');
             return invalid('Please select a valid service.');
         }
 
         const phone = normalizeUsPhone(phoneInput);
         if (!phone) {
+            logFailure('contact.validation_failed');
             return invalid('Please enter a valid US phone number.');
         }
 
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            logFailure('contact.validation_failed');
             return invalid('Please enter a valid email address.');
         }
 
-        await initMongoDB();
+        try {
+            await initMongoDB();
+        } catch (error) {
+            logFailure('contact.mongo_init_failed', error);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: 'Failed to save your request. Please try again later.',
+                },
+                { status: 500 },
+            );
+        }
 
         const forwarded = req.headers.get('x-forwarded-for');
         const ip =
@@ -140,19 +174,31 @@ export async function POST(req: NextRequest) {
         const userAgent = req.headers.get('user-agent') || '';
         const consentTimestamp = new Date();
 
-        const doc = await ContactRequestModel.create({
-            name,
-            phone,
-            email,
-            location,
-            service,
-            message,
-            consent: true,
-            consentTimestamp,
-            consentVersion: CONTACT_CONSENT_VERSION,
-            ip,
-            userAgent,
-        });
+        let doc;
+        try {
+            doc = await ContactRequestModel.create({
+                name,
+                phone,
+                email,
+                location,
+                service,
+                message,
+                consent: true,
+                consentTimestamp,
+                consentVersion: CONTACT_CONSENT_VERSION,
+                ip,
+                userAgent,
+            });
+        } catch (error) {
+            logFailure('contact.mongo_create_failed', error);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: 'Failed to save your request. Please try again later.',
+                },
+                { status: 500 },
+            );
+        }
 
         const safe = {
             name: escapeHtml(name),
@@ -195,11 +241,7 @@ export async function POST(req: NextRequest) {
                 html: render(htmlTemplate.admin.html, vars),
             });
         } catch (error) {
-            console.error(
-                'Admin contact notification failed for stored lead:',
-                doc._id,
-                error,
-            );
+            logFailure('contact.admin_email_failed', error, doc._id);
             return NextResponse.json(
                 {
                     success: true,
@@ -219,11 +261,7 @@ export async function POST(req: NextRequest) {
                     html: render(htmlTemplate.client, vars),
                 });
             } catch (error) {
-                console.error(
-                    'Customer confirmation failed for stored lead:',
-                    doc._id,
-                    error,
-                );
+                logFailure('contact.customer_email_failed', error, doc._id);
             }
         }
 
@@ -232,7 +270,7 @@ export async function POST(req: NextRequest) {
             { status: 201 },
         );
     } catch (error) {
-        console.error('API /api/contact error:', error);
+        logFailure('contact.unexpected_failed', error);
         return NextResponse.json(
             {
                 success: false,

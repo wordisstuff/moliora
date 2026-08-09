@@ -26,6 +26,27 @@ const contactRequestSchema = new Schema(
 export type ContactRequest = InferSchemaType<typeof contactRequestSchema>;
 
 // щоб уникнути "OverwriteModelError" у dev при HMR
-export const ContactRequestModel: Model<ContactRequest> =
-    (mongoose.models.ContactRequest as Model<ContactRequest>) ||
-    mongoose.model<ContactRequest>('ContactRequest', contactRequestSchema);
+const cachedModel = mongoose.models.ContactRequest as
+    | Model<ContactRequest>
+    | undefined;
+
+// A warm development/serverless process can already contain the model compiled
+// from an older deployment. Recompile only when its schema is stale; MongoDB
+// itself remains schemaless and existing documents are unaffected.
+const requiredSchemaPaths = [
+    'consent',
+    'consentTimestamp',
+    'consentVersion',
+] as const;
+const hasCurrentSchema =
+    cachedModel &&
+    requiredSchemaPaths.every(path => cachedModel.schema.path(path)) &&
+    !cachedModel.schema.path('budget');
+
+if (cachedModel && !hasCurrentSchema) {
+    mongoose.deleteModel('ContactRequest');
+}
+
+export const ContactRequestModel: Model<ContactRequest> = hasCurrentSchema
+    ? cachedModel
+    : mongoose.model<ContactRequest>('ContactRequest', contactRequestSchema);
