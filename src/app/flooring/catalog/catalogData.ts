@@ -6,15 +6,106 @@ export type FlooringProduct = {
     tone: 'Light' | 'Natural' | 'Warm' | 'Dark';
     construction: string;
     waterproof: boolean;
-    status: 'sample' | 'planned';
+    model: string;
+    thickness: string;
+    wearLayer: string;
+    plankSize: string;
+    sourceUrl: string;
+    sourceLabel: string;
 };
 
-// Catalog foundation only. Product imagery/specifications should be added from
-// manufacturer-authorized assets after Moliora receives supplier permission.
+// Verified against current manufacturer/retailer product pages in September 2026.
+// We intentionally do not copy manufacturer photography here. The visualizer
+// uses a neutral tonal rendering until Moliora has permission for official assets.
 export const flooringProducts: FlooringProduct[] = [
-    { id: 'msi-everlife-light', brand: 'MSI', collection: 'Everlife', name: 'Light Oak Options', tone: 'Light', construction: 'Luxury vinyl plank', waterproof: true, status: 'planned' },
-    { id: 'msi-everlife-natural', brand: 'MSI', collection: 'Everlife', name: 'Natural Oak Options', tone: 'Natural', construction: 'Luxury vinyl plank', waterproof: true, status: 'planned' },
-    { id: 'msi-everlife-warm', brand: 'MSI', collection: 'Everlife', name: 'Warm Wood Options', tone: 'Warm', construction: 'Luxury vinyl plank', waterproof: true, status: 'planned' },
-    { id: 'coretec-premium', brand: 'COREtec', collection: 'Premium LVP', name: 'Premium Wood Looks', tone: 'Natural', construction: 'Luxury vinyl plank', waterproof: true, status: 'planned' },
-    { id: 'lifeproof-value', brand: 'LifeProof', collection: 'LVP', name: 'Value & Customer-Supplied Options', tone: 'Natural', construction: 'Luxury vinyl plank', waterproof: true, status: 'planned' },
+    {
+        id: 'msi-cyrus2-brookings',
+        brand: 'MSI',
+        collection: 'Everlife • Cyrus 2.0',
+        name: 'Brookings',
+        tone: 'Light',
+        construction: 'Rigid-core LVP',
+        waterproof: true,
+        model: 'VTRBROKIN7X48-5MM-20MIL',
+        thickness: '5 mm',
+        wearLayer: '20 MIL',
+        plankSize: '7 × 48 in.',
+        sourceUrl: 'https://www.msisurfaces.com/luxury-vinyl-planks/cyrus-2/brookings/',
+        sourceLabel: 'MSI product page',
+    },
+    {
+        id: 'msi-cyrus2-finely',
+        brand: 'MSI',
+        collection: 'Everlife • Cyrus 2.0',
+        name: 'Finely',
+        tone: 'Natural',
+        construction: 'Rigid-core LVP',
+        waterproof: true,
+        model: 'VTRFINELY7X48-5MM-20MIL',
+        thickness: '5 mm',
+        wearLayer: '20 MIL',
+        plankSize: '7 × 48 in.',
+        sourceUrl: 'https://www.msisurfaces.com/luxury-vinyl-planks/cyrus-2/finely/',
+        sourceLabel: 'MSI product page',
+    },
+    {
+        id: 'msi-cyrus2-fauna',
+        brand: 'MSI',
+        collection: 'Everlife • Cyrus 2.0',
+        name: 'Fauna',
+        tone: 'Warm',
+        construction: 'Rigid-core LVP',
+        waterproof: true,
+        model: 'VTRFAUNA7X48-5MM-20MIL',
+        thickness: '5 mm',
+        wearLayer: '20 MIL',
+        plankSize: '7 × 48 in.',
+        sourceUrl: 'https://www.msisurfaces.com/luxury-vinyl-planks/cyrus-2/fauna/',
+        sourceLabel: 'MSI product page',
+    },
+    {
+        id: 'lifeproof-sterling-oak',
+        brand: 'LifeProof',
+        collection: 'Luxury Vinyl Plank',
+        name: 'Sterling Oak',
+        tone: 'Natural',
+        construction: 'Click-lock LVP',
+        waterproof: true,
+        model: 'I966106LP',
+        thickness: 'Retailer-listed product',
+        wearLayer: '22 MIL',
+        plankSize: '8.7 × 48 in.',
+        sourceUrl: 'https://www.homedepot.com/b/Flooring-Vinyl-Flooring-Vinyl-Plank-Flooring/Lifeproof/Vinyl-Plank/N-5yc1vZbzjzZnv7Z1z0w3du',
+        sourceLabel: 'The Home Depot listing',
+    },
+    {
+        id: 'lifeproof-dusk-cherry',
+        brand: 'LifeProof',
+        collection: 'Luxury Vinyl Plank',
+        name: 'Dusk Cherry',
+        tone: 'Dark',
+        construction: 'Click-lock LVP',
+        waterproof: true,
+        model: 'I06204LP',
+        thickness: 'Retailer-listed product',
+        wearLayer: '22 MIL',
+        plankSize: '8.7 × 48 in.',
+        sourceUrl: 'https://www.homedepot.com/b/Flooring-Vinyl-Flooring-Vinyl-Plank-Flooring/Lifeproof/Vinyl-Plank/N-5yc1vZbzjzZnv7Z1z0w3du',
+        sourceLabel: 'The Home Depot listing',
+    },
+    {
+        id: 'lifeproof-pinecrest-place-oak',
+        brand: 'LifeProof',
+        collection: 'Luxury Vinyl Plank',
+        name: 'Pinecrest Place Oak',
+        tone: 'Warm',
+        construction: 'Click-lock LVP',
+        waterproof: true,
+        model: 'I233111L',
+        thickness: 'Retailer-listed product',
+        wearLayer: '22 MIL',
+        plankSize: '8.7 × 48 in.',
+        sourceUrl: 'https://www.homedepot.com/b/Flooring-Vinyl-Flooring-Vinyl-Plank-Flooring/Lifeproof/N-5yc1vZbzjzZnv7',
+        sourceLabel: 'The Home Depot listing',
+    },
 ];
