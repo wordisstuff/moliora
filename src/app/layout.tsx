@@ -4,31 +4,27 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/context/themeContext';
 import Menu from '@/components/Menu/Menu';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 import Providers from './providers';
 import { email, phoneE164 } from '@/config/company';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
-const geistMono = Geist_Mono({
-    variable: '--font-geist-mono',
-    subsets: ['latin'],
-});
+const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
     metadataBase: new URL('https://moliora.us'),
-
     title: {
         default: 'Moliora Construction',
         template: 'Moliora Construction | %s',
     },
-
     description:
-        'Windows, doors, remodeling and exterior construction services in Minneapolis–St. Paul, Minnesota.',
-
+        'Windows, doors, remodeling, flooring and exterior construction services in Minneapolis–St. Paul, Minnesota.',
     keywords: [
         'construction company',
         'window installation',
         'door installation',
         'deck repair',
+        'LVP flooring installation',
         'remodeling',
         'exterior services',
         'general contractor',
@@ -36,21 +32,15 @@ export const metadata: Metadata = {
         'St Paul',
         'Minnesota',
     ],
-
     applicationName: 'Moliora Construction',
-
     authors: [{ name: 'Moliora Construction' }],
-
-    alternates: {
-        canonical: 'https://moliora.us/',
-    },
-
+    alternates: { canonical: 'https://moliora.us/' },
     openGraph: {
         type: 'website',
         locale: 'en_US',
         siteName: 'Moliora Construction',
         title: 'Moliora Construction',
-        description: 'Modern construction and exterior services in Minnesota.',
+        description: 'Modern construction, flooring and exterior services in Minnesota.',
         url: 'https://moliora.us/',
         images: [
             {
@@ -61,22 +51,14 @@ export const metadata: Metadata = {
             },
         ],
     },
-
     twitter: {
         card: 'summary_large_image',
         title: 'Moliora Construction',
-        description:
-            'Modern construction and remodeling services in Minnesota.',
+        description: 'Modern construction, flooring and remodeling services in Minnesota.',
         images: ['https://moliora.us/og.png'],
     },
-
-    robots: {
-        index: true,
-        follow: true,
-    },
-
+    robots: { index: true, follow: true },
     category: 'construction',
-
     icons: {
         icon: [
             { url: '/favicon.ico', sizes: 'any' },
@@ -93,18 +75,12 @@ export const viewport: Viewport = {
         { media: '(prefers-color-scheme: dark)', color: '#3f3a2e' },
     ],
 };
-export default async function RootLayout({
-    children,
-}: Readonly<{ children: React.ReactNode }>) {
-    // У твоїй версії Next cookies() — async:
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     const cookieStore = await cookies();
-    const themeCookie = cookieStore.get('theme')?.value as
-        | 'light'
-        | 'dark'
-        | undefined;
+    const themeCookie = cookieStore.get('theme')?.value as 'light' | 'dark' | undefined;
     const initialTheme = themeCookie ?? 'light';
 
-    // JSON-LD (Local Business / Home & Construction)
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'HomeAndConstructionBusiness',
@@ -112,7 +88,7 @@ export default async function RootLayout({
         url: 'https://moliora.us',
         telephone: phoneE164,
         email,
-        areaServed: ['Minneapolis', 'St. Paul', 'Minnesota'],
+        areaServed: ['Minneapolis', 'St. Paul', 'Anoka', 'Ramsey', 'Minnesota'],
         address: {
             '@type': 'PostalAddress',
             addressLocality: 'Minneapolis',
@@ -122,53 +98,23 @@ export default async function RootLayout({
         openingHours: 'Mo-Fr 08:00-18:00, Sa 09:00-14:00',
         image: 'https://moliora.us/icon.svg',
         makesOffer: [
-            {
-                '@type': 'Offer',
-                itemOffered: {
-                    '@type': 'Service',
-                    name: 'Window Installation',
-                },
-            },
-            {
-                '@type': 'Offer',
-                itemOffered: {
-                    '@type': 'Service',
-                    name: 'Door Installation',
-                },
-            },
-            {
-                '@type': 'Offer',
-                itemOffered: {
-                    '@type': 'Service',
-                    name: 'Deck Repair',
-                },
-            },
-            {
-                '@type': 'Offer',
-                itemOffered: {
-                    '@type': 'Service',
-                    name: 'Exterior Remodeling',
-                },
-            },
+            { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Window Installation' } },
+            { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Door Installation' } },
+            { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Deck Repair' } },
+            { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'LVP Flooring Installation' } },
+            { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Exterior Remodeling' } },
         ],
     };
 
     return (
         <html lang="en" className={initialTheme} suppressHydrationWarning>
-            <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-                id="top"
-            >
-                {/* JSON-LD Schema.org */}
-                {/* JSON-LD Schema.org */}
+            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} id="top">
+                <GoogleAnalytics />
                 <script
                     type="application/ld+json"
                     suppressHydrationWarning
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify(jsonLd, null, 2),
-                    }}
-                ></script>
-                {/* THEME PROVIDER + NAV */}
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd, null, 2) }}
+                />
                 <Providers>
                     <ThemeProvider>
                         <Menu />

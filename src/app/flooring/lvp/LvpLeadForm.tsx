@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { phoneDisplay, phoneHref } from '@/config/company';
 
 type ApiResponse = {
@@ -10,15 +10,74 @@ type ApiResponse = {
     notificationPending?: boolean;
 };
 
+type Attribution = {
+    utmSource: string;
+    utmMedium: string;
+    utmCampaign: string;
+    utmTerm: string;
+    utmContent: string;
+    gclid: string;
+    landingPage: string;
+};
+
+const ATTRIBUTION_KEY = 'moliora_lvp_attribution_v1';
+
 const fieldClass =
     'min-h-12 w-full border border-white/15 bg-black/30 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#d6ad63] focus:ring-2 focus:ring-[#d6ad63]/30';
-
 const selectClass = `${fieldClass} appearance-none`;
+
+function readAttribution(): Attribution {
+    const empty: Attribution = {
+        utmSource: '', utmMedium: '', utmCampaign: '', utmTerm: '', utmContent: '', gclid: '', landingPage: '',
+    };
+    if (typeof window === 'undefined') return empty;
+
+    const params = new URLSearchParams(window.location.search);
+    const current: Attribution = {
+        utmSource: params.get('utm_source') || '',
+        utmMedium: params.get('utm_medium') || '',
+        utmCampaign: params.get('utm_campaign') || '',
+        utmTerm: params.get('utm_term') || '',
+        utmContent: params.get('utm_content') || '',
+        gclid: params.get('gclid') || '',
+        landingPage: `${window.location.pathname}${window.location.search}`,
+    };
+
+    const hasCampaignData = Object.entries(current).some(([key, value]) => key !== 'landingPage' && Boolean(value));
+    if (hasCampaignData) {
+        localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(current));
+        return current;
+    }
+
+    try {
+        const saved = JSON.parse(localStorage.getItem(ATTRIBUTION_KEY) || '{}') as Partial<Attribution>;
+        return { ...empty, ...saved, landingPage: current.landingPage };
+    } catch {
+        return current;
+    }
+}
+
+function fireEvent(eventName: string, params: Record<string, string> = {}) {
+    const w = window as typeof window & {
+        dataLayer?: Array<Record<string, unknown>>;
+        gtag?: (...args: unknown[]) => void;
+    };
+    w.dataLayer = w.dataLayer || [];
+    w.dataLayer.push({ event: eventName, ...params });
+    w.gtag?.('event', eventName, params);
+}
 
 export default function LvpLeadForm() {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [attribution, setAttribution] = useState<Attribution>({
+        utmSource: '', utmMedium: '', utmCampaign: '', utmTerm: '', utmContent: '', gclid: '', landingPage: '',
+    });
+
+    useEffect(() => {
+        setAttribution(readAttribution());
+    }, []);
 
     async function submit(form: HTMLFormElement) {
         setError('');
@@ -37,6 +96,7 @@ export default function LvpLeadForm() {
             consent: data.get('consent') === 'true',
             website: String(data.get('website') || ''),
             leadSource: 'LVP Flooring Landing Page',
+            ...attribution,
         };
 
         startTransition(async () => {
@@ -51,6 +111,13 @@ export default function LvpLeadForm() {
                     setError(result.error || 'We could not submit your request. Please try again.');
                     return;
                 }
+
+                fireEvent('generate_lead', {
+                    service: 'LVP Flooring',
+                    lead_id: result.id || '',
+                    location: payload.location,
+                    approximate_area: payload.approximateArea,
+                });
                 setSuccess(true);
                 form.reset();
             } catch {
@@ -68,7 +135,11 @@ export default function LvpLeadForm() {
                 <p className="mt-4 max-w-xl leading-7 text-white/70">
                     We received your flooring request and will review the project details. We’ll contact you about the next step.
                 </p>
-                <a href={phoneHref} className="mt-6 inline-flex min-h-12 items-center justify-center border border-[#d6ad63]/60 px-5 text-sm font-semibold text-[#f0c978] hover:bg-[#d6ad63]/10">
+                <a
+                    href={phoneHref}
+                    onClick={() => fireEvent('call_click', { placement: 'lvp_success' })}
+                    className="mt-6 inline-flex min-h-12 items-center justify-center border border-[#d6ad63]/60 px-5 text-sm font-semibold text-[#f0c978] hover:bg-[#d6ad63]/10"
+                >
                     Call {phoneDisplay}
                 </a>
             </div>
@@ -102,7 +173,6 @@ export default function LvpLeadForm() {
                     <span className="mb-2 block text-sm font-medium">City or ZIP *</span>
                     <input name="location" required autoComplete="postal-code" className={fieldClass} placeholder="Ramsey, MN or 55303" />
                 </label>
-
                 <label className="block">
                     <span className="mb-2 block text-sm font-medium">Approximate floor area *</span>
                     <select name="approximateArea" required defaultValue="" className={selectClass}>
