@@ -21,7 +21,15 @@ const contactRequestSchema = new Schema(
         demolition: { type: String, default: '' },
         materialSupply: { type: String, default: '' },
 
-        // технічні поля, якщо захочеш використовувати:
+        // Marketing attribution captured from landing-page URLs.
+        utmSource: { type: String, default: '' },
+        utmMedium: { type: String, default: '' },
+        utmCampaign: { type: String, default: '' },
+        utmTerm: { type: String, default: '' },
+        utmContent: { type: String, default: '' },
+        gclid: { type: String, default: '' },
+        landingPage: { type: String, default: '' },
+
         ip: { type: String, default: '' },
         userAgent: { type: String, default: '' },
     },
@@ -33,14 +41,10 @@ const contactRequestSchema = new Schema(
 
 export type ContactRequest = InferSchemaType<typeof contactRequestSchema>;
 
-// щоб уникнути "OverwriteModelError" у dev при HMR
 const cachedModel = mongoose.models.ContactRequest as
     | Model<ContactRequest>
     | undefined;
 
-// A warm development/serverless process can already contain the model compiled
-// from an older deployment. Recompile only when its schema is stale; MongoDB
-// itself remains schemaless and existing documents are unaffected.
 const requiredSchemaPaths = [
     'consent',
     'consentTimestamp',
@@ -50,6 +54,13 @@ const requiredSchemaPaths = [
     'existingFlooring',
     'demolition',
     'materialSupply',
+    'utmSource',
+    'utmMedium',
+    'utmCampaign',
+    'utmTerm',
+    'utmContent',
+    'gclid',
+    'landingPage',
 ] as const;
 const hasCurrentSchema =
     cachedModel &&
