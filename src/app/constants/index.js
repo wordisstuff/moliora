@@ -6,8 +6,6 @@ export const TWO_HOURS = 7200000;
 export const ONE_DAY = 86400000;
 
 export const authDb = {
-    // port: env(VARS.PORT, 3000),
-    // secret: env('MY_SYCRET'),
     user: env(VARS.USER),
     pwd: env(VARS.PASSWORD),
     url: env(VARS.URL),
@@ -17,7 +15,7 @@ export const authDb = {
 
 const ADMIN_HTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>New Contact Request</title></head>
+<title>{{adminTitle}}</title></head>
 <body style="margin:0;padding:0;background:#f5e8d9;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5e8d9;">
     <tr><td align="center" style="padding:24px;">
@@ -29,8 +27,8 @@ const ADMIN_HTML = `<!doctype html>
           <div style="font-family:Arial,Helvetica,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#3f3a2e;opacity:.8;font-size:12px;margin-top:6px;">Home Services</div>
         </td></tr>
         <tr><td style="padding:24px 24px 8px 24px;">
-          <h1 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#3f3a2e;">New Contact Request</h1>
-          <p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.8;font-size:14px;">A new message came in from your website contact form.</p>
+          <h1 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#3f3a2e;">{{adminTitle}}</h1>
+          <p style="margin:8px 0 0 0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.8;font-size:14px;">{{adminIntro}}</p>
         </td></tr>
         <tr><td style="padding:8px 24px 16px 24px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf6ee;border:1px solid #e9dac8;border-radius:10px;">
@@ -59,7 +57,9 @@ const ADMIN_HTML = `<!doctype html>
 </body></html>`;
 
 const ADMIN_TEXT = `
-New Contact Request
+{{adminTitle}}
+
+{{adminIntro}}
 
 Name: {{name}}
 Phone: {{phone}}
@@ -87,8 +87,7 @@ const CLIENT_HTML = `<!doctype html>
         <tr><td style="padding:24px;">
           <h1 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#3f3a2e;">Thank you, {{name}}!</h1>
           <p style="margin:12px 0 20px 0;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;opacity:.9;font-size:15px;line-height:1.6;">
-            We’ve received your message and our team will get back to you within one business day.
-            We will review the project details and contact you within one business day.
+            We’ve received your message and our team will review the project details and contact you within one business day.
           </p>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fbf6ee;border:1px solid #e9dac8;border-radius:10px;">
             <tr><td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;color:#3f3a2e;font-size:14px;">
@@ -97,9 +96,7 @@ const CLIENT_HTML = `<!doctype html>
             </td></tr>
           </table>
           <p style="margin-top:32px;text-align:center;">
-            <a href="mailto:${
-                process.env.ADMIN_TO ?? 'wordisstuff@gmail.com'
-            }" style="background:#3f3a2e;color:#f5e8d9;text-decoration:none;padding:12px 22px;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;">Contact mOliora Support</a>
+            <a href="mailto:${process.env.ADMIN_TO ?? 'wordisstuff@gmail.com'}" style="background:#3f3a2e;color:#f5e8d9;text-decoration:none;padding:12px 22px;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;">Contact mOliora Support</a>
           </p>
         </td></tr>
         <tr><td style="background:#f5e8d9;padding:14px;text-align:center;border-top:1px solid #e9dac8;">
