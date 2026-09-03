@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { flooringProducts } from '../catalog/catalogData';
 
 const rooms = ['Bedroom', 'Living Room', 'Basement'] as const;
@@ -27,6 +27,11 @@ export default function DesignStudio() {
     const [room, setRoom] = useState<(typeof rooms)[number]>('Bedroom');
     const [productId, setProductId] = useState(flooringProducts[0]?.id ?? '');
     const [direction, setDirection] = useState<(typeof directions)[number]>('Toward the window');
+
+    useEffect(() => {
+        const requested = new URLSearchParams(window.location.search).get('floor');
+        if (requested && flooringProducts.some(item => item.id === requested)) setProductId(requested);
+    }, []);
 
     const product = useMemo(() => flooringProducts.find(item => item.id === productId) ?? flooringProducts[0], [productId]);
     const floorBackground = toneBackground[product?.tone ?? 'Natural'];
