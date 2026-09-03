@@ -13,6 +13,14 @@ const contactRequestSchema = new Schema(
         consentTimestamp: { type: Date },
         consentVersion: { type: String, default: '' },
 
+        // Optional lead-source/service-specific fields. Existing general contact
+        // submissions remain compatible because these are never required.
+        leadSource: { type: String, default: '' },
+        approximateArea: { type: String, default: '' },
+        existingFlooring: { type: String, default: '' },
+        demolition: { type: String, default: '' },
+        materialSupply: { type: String, default: '' },
+
         // технічні поля, якщо захочеш використовувати:
         ip: { type: String, default: '' },
         userAgent: { type: String, default: '' },
@@ -37,6 +45,11 @@ const requiredSchemaPaths = [
     'consent',
     'consentTimestamp',
     'consentVersion',
+    'leadSource',
+    'approximateArea',
+    'existingFlooring',
+    'demolition',
+    'materialSupply',
 ] as const;
 const hasCurrentSchema =
     cachedModel &&

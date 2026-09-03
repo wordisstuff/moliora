@@ -15,6 +15,11 @@ type ContactPayload = {
     message?: unknown;
     consent?: unknown;
     website?: unknown;
+    leadSource?: unknown;
+    approximateArea?: unknown;
+    existingFlooring?: unknown;
+    demolition?: unknown;
+    materialSupply?: unknown;
 };
 
 const LIMITS = {
@@ -24,6 +29,11 @@ const LIMITS = {
     location: 120,
     service: 80,
     message: 4_000,
+    leadSource: 120,
+    approximateArea: 80,
+    existingFlooring: 80,
+    demolition: 40,
+    materialSupply: 120,
 } as const;
 
 function escapeHtml(s: string) {
@@ -84,9 +94,6 @@ type SafeFailureDetails = Record<
 >;
 
 function duplicateKeyIndexName(error: mongo.MongoServerError) {
-    // The driver exposes keyPattern but not a dedicated index-name property for
-    // every E11000 response. Extract only the index identifier from the server
-    // message; never log the rest of that message because it contains keyValue.
     const message = typeof error.message === 'string' ? error.message : '';
     return message.match(/\bindex:\s+([^\s]+)\s+dup key\b/)?.[1];
 }
@@ -96,19 +103,11 @@ function logFailure(stage: string, error?: unknown, id?: unknown) {
     if (error instanceof Error) details.errorType = error.name;
     if (error instanceof mongo.MongoServerError) {
         if (typeof error.code === 'number') details.code = error.code;
-        if (typeof error.codeName === 'string') {
-            details.codeName = error.codeName;
-        }
-
+        if (typeof error.codeName === 'string') details.codeName = error.codeName;
         const keyPattern = error.keyPattern;
-        if (
-            keyPattern &&
-            typeof keyPattern === 'object' &&
-            !Array.isArray(keyPattern)
-        ) {
+        if (keyPattern && typeof keyPattern === 'object' && !Array.isArray(keyPattern)) {
             details.keyFields = Object.keys(keyPattern).sort();
         }
-
         if (error.code === 11000) {
             const index = duplicateKeyIndexName(error);
             if (index) details.index = index;
@@ -129,7 +128,6 @@ export async function POST(req: NextRequest) {
 
     try {
         const website = text(body.website);
-
         if (website) {
             logFailure('contact.validation_failed');
             return invalid('Unable to submit request.');
@@ -141,6 +139,11 @@ export async function POST(req: NextRequest) {
         const location = text(body.location);
         const service = text(body.service);
         const message = text(body.message);
+        const leadSource = text(body.leadSource);
+        const approximateArea = text(body.approximateArea);
+        const existingFlooring = text(body.existingFlooring);
+        const demolition = text(body.demolition);
+        const materialSupply = text(body.materialSupply);
         const consent = body.consent === true || body.consent === 'true';
 
         if (!name || !phoneInput || !location || !service || !message) {
@@ -152,14 +155,20 @@ export async function POST(req: NextRequest) {
             return invalid('Please agree to be contacted about your request.');
         }
 
-        for (const [field, value] of Object.entries({
+        const fields = {
             name,
             phone: phoneInput,
             email,
             location,
             service,
             message,
-        })) {
+            leadSource,
+            approximateArea,
+            existingFlooring,
+            demolition,
+            materialSupply,
+        };
+        for (const [field, value] of Object.entries(fields)) {
             const limit = LIMITS[field as keyof typeof LIMITS];
             if (value.length > limit) {
                 logFailure('contact.validation_failed');
@@ -167,13 +176,15 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        if (
-            !CONTACT_SERVICES.includes(
-                service as (typeof CONTACT_SERVICES)[number],
-            )
-        ) {
+        if (!CONTACT_SERVICES.includes(service as (typeof CONTACT_SERVICES)[number])) {
             logFailure('contact.validation_failed');
             return invalid('Please select a valid service.');
+        }
+
+        const isLvp = service === 'LVP Flooring';
+        if (isLvp && (!approximateArea || !existingFlooring || !demolition || !materialSupply)) {
+            logFailure('contact.validation_failed');
+            return invalid('Please complete the flooring project details.');
         }
 
         const phone = normalizeUsPhone(phoneInput);
@@ -181,7 +192,6 @@ export async function POST(req: NextRequest) {
             logFailure('contact.validation_failed');
             return invalid('Please enter a valid US phone number.');
         }
-
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             logFailure('contact.validation_failed');
             return invalid('Please enter a valid email address.');
@@ -192,10 +202,7 @@ export async function POST(req: NextRequest) {
         } catch (error) {
             logFailure('contact.mongo_init_failed', error);
             return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Failed to save your request. Please try again later.',
-                },
+                { success: false, error: 'Failed to save your request. Please try again later.' },
                 { status: 500 },
             );
         }
@@ -220,19 +227,29 @@ export async function POST(req: NextRequest) {
                 consent: true,
                 consentTimestamp,
                 consentVersion: CONTACT_CONSENT_VERSION,
+                leadSource,
+                approximateArea,
+                existingFlooring,
+                demolition,
+                materialSupply,
                 ip,
                 userAgent,
             });
         } catch (error) {
             logFailure('contact.mongo_create_failed', error);
             return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Failed to save your request. Please try again later.',
-                },
+                { success: false, error: 'Failed to save your request. Please try again later.' },
                 { status: 500 },
             );
         }
+
+        const flooringText = isLvp
+            ? `\nApprox. area: ${approximateArea}\nExisting flooring: ${existingFlooring}\nRemoval needed: ${demolition}\nMaterial supply: ${materialSupply}\nLead source: ${leadSource || 'LVP Flooring Landing Page'}`
+            : '';
+
+        const flooringHtml = isLvp
+            ? `<br><br><strong>Flooring details</strong><br><strong style="display:inline-block;width:140px;">Approx. area:</strong> ${escapeHtml(approximateArea)}<br><strong style="display:inline-block;width:140px;">Existing floor:</strong> ${escapeHtml(existingFlooring)}<br><strong style="display:inline-block;width:140px;">Removal needed:</strong> ${escapeHtml(demolition)}<br><strong style="display:inline-block;width:140px;">Material:</strong> ${escapeHtml(materialSupply)}<br><strong style="display:inline-block;width:140px;">Lead source:</strong> ${escapeHtml(leadSource || 'LVP Flooring Landing Page')}`
+            : '';
 
         const safe = {
             name: escapeHtml(name),
@@ -240,7 +257,7 @@ export async function POST(req: NextRequest) {
             phone: escapeHtml(phone),
             location: escapeHtml(location),
             service: escapeHtml(service),
-            message: nl2br(escapeHtml(message)),
+            message: nl2br(escapeHtml(message)) + flooringHtml,
             year: String(new Date().getFullYear()),
         };
         const vars = {
@@ -259,29 +276,23 @@ export async function POST(req: NextRequest) {
             await transporter.sendMail({
                 from: `"mOliora Contact" <${process.env.MAIL_FROM ?? process.env.SMTP_USER}>`,
                 to:
-                    [
-                        process.env.ADMIN_TO,
-                        process.env.ADMIN_TO1,
-                        process.env.ADMIN_TO2,
-                    ]
+                    [process.env.ADMIN_TO, process.env.ADMIN_TO1, process.env.ADMIN_TO2]
                         .filter(Boolean)
                         .join(',') || 'wordisstuff@gmail.com',
                 ...(email ? { replyTo: email } : {}),
-                subject: `New request from ${name} • ${service}`,
+                subject: isLvp
+                    ? `NEW LVP LEAD • ${location} • ${approximateArea}`
+                    : `New request from ${name} • ${service}`,
                 text: render(htmlTemplate.admin.text, {
                     ...vars,
-                    message,
+                    message: `${message}${flooringText}`,
                 }),
                 html: render(htmlTemplate.admin.html, vars),
             });
         } catch (error) {
             logFailure('contact.admin_email_failed', error, doc._id);
             return NextResponse.json(
-                {
-                    success: true,
-                    id: doc._id.toString(),
-                    notificationPending: true,
-                },
+                { success: true, id: doc._id.toString(), notificationPending: true },
                 { status: 202 },
             );
         }
@@ -291,7 +302,7 @@ export async function POST(req: NextRequest) {
                 await transporter.sendMail({
                     from: `"mOliora Home Services" <${process.env.MAIL_FROM ?? process.env.SMTP_USER}>`,
                     to: email,
-                    subject: 'We received your request',
+                    subject: isLvp ? 'We received your flooring request' : 'We received your request',
                     html: render(htmlTemplate.client, vars),
                 });
             } catch (error) {
@@ -306,10 +317,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         logFailure('contact.unexpected_failed', error);
         return NextResponse.json(
-            {
-                success: false,
-                error: 'Failed to save your request. Please try again later.',
-            },
+            { success: false, error: 'Failed to save your request. Please try again later.' },
             { status: 500 },
         );
     }

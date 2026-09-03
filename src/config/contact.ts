@@ -5,6 +5,7 @@ export const CONTACT_SERVICES = [
     'Remodeling',
     'Exterior Services',
     'Handyman Services',
+    'LVP Flooring',
     'Other',
 ] as const;
 
