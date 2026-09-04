@@ -1,3 +1,8 @@
+export type FlooringTextureAsset = {
+    src: string;
+    label?: string;
+};
+
 export type FlooringProduct = {
     id: string;
     brand: string;
@@ -12,11 +17,12 @@ export type FlooringProduct = {
     plankSize: string;
     sourceUrl: string;
     sourceLabel: string;
+    textureAssets: FlooringTextureAsset[];
 };
 
 // Verified against current manufacturer/retailer product pages in September 2026.
-// We intentionally do not copy manufacturer photography here. The visualizer
-// uses a neutral tonal rendering until Moliora has permission for official assets.
+// Manufacturer photography is not copied into Moliora. textureAssets stays empty
+// until Moliora has owned, licensed, dealer-provided or otherwise approved imagery.
 export const flooringProducts: FlooringProduct[] = [
     {
         id: 'msi-cyrus2-brookings',
@@ -32,6 +38,7 @@ export const flooringProducts: FlooringProduct[] = [
         plankSize: '7 × 48 in.',
         sourceUrl: 'https://www.msisurfaces.com/luxury-vinyl-planks/cyrus-2/brookings/',
         sourceLabel: 'MSI product page',
+        textureAssets: [],
     },
     {
         id: 'msi-cyrus2-finely',
@@ -47,6 +54,7 @@ export const flooringProducts: FlooringProduct[] = [
         plankSize: '7 × 48 in.',
         sourceUrl: 'https://www.msisurfaces.com/luxury-vinyl-planks/cyrus-2/finely/',
         sourceLabel: 'MSI product page',
+        textureAssets: [],
     },
     {
         id: 'msi-cyrus2-fauna',
@@ -62,6 +70,7 @@ export const flooringProducts: FlooringProduct[] = [
         plankSize: '7 × 48 in.',
         sourceUrl: 'https://www.msisurfaces.com/luxury-vinyl-planks/cyrus-2/fauna/',
         sourceLabel: 'MSI product page',
+        textureAssets: [],
     },
     {
         id: 'lifeproof-sterling-oak',
@@ -77,6 +86,7 @@ export const flooringProducts: FlooringProduct[] = [
         plankSize: '8.7 × 48 in.',
         sourceUrl: 'https://www.homedepot.com/b/Flooring-Vinyl-Flooring-Vinyl-Plank-Flooring/Lifeproof/Vinyl-Plank/N-5yc1vZbzjzZnv7Z1z0w3du',
         sourceLabel: 'The Home Depot listing',
+        textureAssets: [],
     },
     {
         id: 'lifeproof-dusk-cherry',
@@ -92,6 +102,7 @@ export const flooringProducts: FlooringProduct[] = [
         plankSize: '8.7 × 48 in.',
         sourceUrl: 'https://www.homedepot.com/b/Flooring-Vinyl-Flooring-Vinyl-Plank-Flooring/Lifeproof/Vinyl-Plank/N-5yc1vZbzjzZnv7Z1z0w3du',
         sourceLabel: 'The Home Depot listing',
+        textureAssets: [],
     },
     {
         id: 'lifeproof-pinecrest-place-oak',
@@ -107,5 +118,6 @@ export const flooringProducts: FlooringProduct[] = [
         plankSize: '8.7 × 48 in.',
         sourceUrl: 'https://www.homedepot.com/b/Flooring-Vinyl-Flooring-Vinyl-Plank-Flooring/Lifeproof/N-5yc1vZbzjzZnv7',
         sourceLabel: 'The Home Depot listing',
+        textureAssets: [],
     },
 ];
