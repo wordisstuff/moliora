@@ -39,10 +39,10 @@ const faqs = [
 ];
 
 const floorTones = [
-    { name: 'Light Oak', note: 'Bright & modern', background: 'radial-gradient(ellipse at 30% 50%, transparent 0 18%, rgba(111,78,48,.28) 19% 21%, transparent 22% 38%), repeating-linear-gradient(96deg,#e3d2b9 0 13px,#c9ae8a 14px,#e5d6bf 17px)' },
-    { name: 'Natural Oak', note: 'Timeless & versatile', background: 'radial-gradient(ellipse at 65% 45%, transparent 0 16%, rgba(93,58,31,.30) 17% 19%, transparent 20% 34%), repeating-linear-gradient(94deg,#c9a177 0 12px,#a97a4e 13px,#d0aa80 16px)' },
-    { name: 'Warm Oak', note: 'Cozy & inviting', background: 'radial-gradient(ellipse at 35% 54%, transparent 0 18%, rgba(82,47,24,.34) 19% 21%, transparent 22% 36%), repeating-linear-gradient(93deg,#b47743 0 12px,#8e582f 13px,#c4874f 16px)' },
-    { name: 'Dark Oak', note: 'Bold & elegant', background: 'radial-gradient(ellipse at 68% 48%, transparent 0 17%, rgba(223,190,145,.16) 18% 20%, transparent 21% 35%), repeating-linear-gradient(95deg,#4e382d 0 12px,#2f241f 13px,#604638 16px)' },
+    { name: 'Light Oak', note: 'Bright & modern', src: '/plank/1.png' },
+    { name: 'Natural Oak', note: 'Timeless & versatile', src: '/plank/2.png' },
+    { name: 'Warm Oak', note: 'Cozy & inviting', src: '/plank/3.png' },
+    { name: 'Dark Oak', note: 'Bold & elegant', src: '/plank/4.png' },
 ] as const;
 
 export default function LvpFlooringPage() {
@@ -107,7 +107,10 @@ export default function LvpFlooringPage() {
                         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:mt-0 lg:grid-cols-4">
                             {floorTones.map(tone => (
                                 <div key={tone.name}>
-                                    <div className="h-24 rounded-lg border border-white/15 shadow-inner" style={{ background: tone.background }} />
+                                    <div
+                                        className="h-24 rounded-lg border border-white/15 bg-cover bg-center shadow-inner"
+                                        style={{ backgroundImage: `url('${tone.src}')` }}
+                                    />
                                     <p className="mt-2 font-semibold">{tone.name}</p>
                                     <p className="mt-1 text-xs text-white/45">{tone.note}</p>
                                 </div>
