@@ -87,88 +87,65 @@ export default function RoomvoAssistant() {
 
         const interval = window.setInterval(runActivation, 500);
         const timeout = window.setTimeout(() => window.clearInterval(interval), 10000);
+        let highlightTimer: number | null = null;
 
-        let restoreTimer: number | null = null;
-        let armedFrame: HTMLIFrameElement | null = null;
-        let originalStyle = '';
-
-        const restoreFrame = () => {
-            if (!armedFrame) return;
-            armedFrame.setAttribute('style', originalStyle);
-            armedFrame = null;
-            originalStyle = '';
-            if (restoreTimer !== null) window.clearTimeout(restoreTimer);
-            restoreTimer = null;
-        };
-
-        const armNativeRoomvoLauncher = (target: HTMLElement) => {
-            restoreFrame();
-
+        const highlightNativeRoomvo = () => {
             const frame = findRoomvoLauncherFrame();
             if (!frame) return false;
 
-            const rect = target.getBoundingClientRect();
-            armedFrame = frame;
-            originalStyle = frame.getAttribute('style') ?? '';
+            const oldTransition = frame.style.transition;
+            const oldTransform = frame.style.transform;
+            const oldFilter = frame.style.filter;
 
-            Object.assign(frame.style, {
-                position: 'fixed',
-                left: `${rect.left}px`,
-                top: `${rect.top}px`,
-                width: `${rect.width}px`,
-                height: `${rect.height}px`,
-                minWidth: '0',
-                minHeight: '0',
-                maxWidth: 'none',
-                maxHeight: 'none',
-                margin: '0',
-                border: '0',
-                transform: 'none',
-                opacity: '0.01',
-                pointerEvents: 'auto',
-                zIndex: '2147483647',
-            });
+            frame.style.transition = 'transform 180ms ease, filter 180ms ease';
+            frame.style.transform = `${oldTransform || ''} scale(1.08)`.trim();
+            frame.style.filter = 'drop-shadow(0 0 14px rgba(240, 201, 120, 0.95))';
 
-            // The next physical click lands inside Roomvo's own iframe, so Roomvo
-            // receives a real user gesture and opens its normal on-site overlay.
-            restoreTimer = window.setTimeout(restoreFrame, 1800);
+            if (highlightTimer !== null) window.clearTimeout(highlightTimer);
+            highlightTimer = window.setTimeout(() => {
+                frame.style.transition = oldTransition;
+                frame.style.transform = oldTransform;
+                frame.style.filter = oldFilter;
+                highlightTimer = null;
+            }, 2200);
+
             return true;
         };
 
-        const onPointerEnter = (event: PointerEvent) => {
-            const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-moliora-roomvo-launcher="true"]');
-            if (!target || event.pointerType === 'touch') return;
-            armNativeRoomvoLauncher(target);
-        };
-
-        const onFocusIn = (event: FocusEvent) => {
-            const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-moliora-roomvo-launcher="true"]');
-            if (!target) return;
-            armNativeRoomvoLauncher(target);
+        const launch = (target: HTMLElement) => {
+            const found = highlightNativeRoomvo();
+            const original = target.textContent;
+            target.textContent = found ? 'Open Roomvo ↘' : 'Roomvo is loading…';
+            window.setTimeout(() => {
+                target.textContent = original || 'Design Center →';
+            }, 2200);
         };
 
         const onClick = (event: MouseEvent) => {
             const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-moliora-roomvo-launcher="true"]');
             if (!target) return;
-
-            // If the native iframe was not armed (for example on touch), keep the
-            // shopper on Moliora and point them to Roomvo's already-working widget.
             event.preventDefault();
-            window.alert('Tap the Roomvo “See our products in your space” button in the lower-right corner to open the Design Center.');
+            launch(target);
         };
 
-        document.addEventListener('pointerover', onPointerEnter);
-        document.addEventListener('focusin', onFocusIn);
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-moliora-roomvo-launcher="true"]');
+            if (!target) return;
+            event.preventDefault();
+            launch(target);
+        };
+
         document.addEventListener('click', onClick);
+        document.addEventListener('keydown', onKeyDown);
 
         return () => {
             observer.disconnect();
             window.clearInterval(interval);
             window.clearTimeout(timeout);
-            restoreFrame();
-            document.removeEventListener('pointerover', onPointerEnter);
-            document.removeEventListener('focusin', onFocusIn);
+            if (highlightTimer !== null) window.clearTimeout(highlightTimer);
             document.removeEventListener('click', onClick);
+            document.removeEventListener('keydown', onKeyDown);
         };
     }, [pathname]);
 
