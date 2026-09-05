@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 
@@ -10,20 +10,18 @@ function isVisible(element: HTMLElement) {
     return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
 }
 
-function findRoomvoFrameUrl() {
+function findRoomvoLauncherFrame() {
     const frames = Array.from(document.querySelectorAll<HTMLIFrameElement>('iframe'))
-        .filter(frame => /roomvo/i.test(frame.src || ''));
+        .filter(frame => /roomvo/i.test(frame.src || '') && isVisible(frame));
 
     if (!frames.length) return null;
 
-    const ranked = frames
+    return frames
         .map(frame => {
             const rect = frame.getBoundingClientRect();
             return { frame, area: rect.width * rect.height };
         })
-        .sort((a, b) => b.area - a.area);
-
-    return ranked[0]?.frame.src || frames[0]?.src || null;
+        .sort((a, b) => a.area - b.area)[0]?.frame ?? null;
 }
 
 function activateDesignCenterUi() {
@@ -77,7 +75,6 @@ function activateDesignCenterUi() {
 
 export default function RoomvoAssistant() {
     const pathname = usePathname();
-    const [roomvoUrl, setRoomvoUrl] = useState<string | null>(null);
 
     useEffect(() => {
         if (pathname !== '/flooring/lvp') return;
@@ -91,95 +88,99 @@ export default function RoomvoAssistant() {
         const interval = window.setInterval(runActivation, 500);
         const timeout = window.setTimeout(() => window.clearInterval(interval), 10000);
 
-        const openDesignCenter = () => {
-            const url = findRoomvoFrameUrl();
-            if (url) {
-                setRoomvoUrl(url);
-                document.documentElement.style.overflow = 'hidden';
-                return;
-            }
+        let restoreTimer: number | null = null;
+        let armedFrame: HTMLIFrameElement | null = null;
+        let originalStyle = '';
 
-            window.alert('The Design Center is still loading. Please use the Roomvo button in the lower-right corner for now.');
+        const restoreFrame = () => {
+            if (!armedFrame) return;
+            armedFrame.setAttribute('style', originalStyle);
+            armedFrame = null;
+            originalStyle = '';
+            if (restoreTimer !== null) window.clearTimeout(restoreTimer);
+            restoreTimer = null;
+        };
+
+        const armNativeRoomvoLauncher = (target: HTMLElement) => {
+            restoreFrame();
+
+            const frame = findRoomvoLauncherFrame();
+            if (!frame) return false;
+
+            const rect = target.getBoundingClientRect();
+            armedFrame = frame;
+            originalStyle = frame.getAttribute('style') ?? '';
+
+            Object.assign(frame.style, {
+                position: 'fixed',
+                left: `${rect.left}px`,
+                top: `${rect.top}px`,
+                width: `${rect.width}px`,
+                height: `${rect.height}px`,
+                minWidth: '0',
+                minHeight: '0',
+                maxWidth: 'none',
+                maxHeight: 'none',
+                margin: '0',
+                border: '0',
+                transform: 'none',
+                opacity: '0.01',
+                pointerEvents: 'auto',
+                zIndex: '2147483647',
+            });
+
+            // The next physical click lands inside Roomvo's own iframe, so Roomvo
+            // receives a real user gesture and opens its normal on-site overlay.
+            restoreTimer = window.setTimeout(restoreFrame, 1800);
+            return true;
+        };
+
+        const onPointerEnter = (event: PointerEvent) => {
+            const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-moliora-roomvo-launcher="true"]');
+            if (!target || event.pointerType === 'touch') return;
+            armNativeRoomvoLauncher(target);
+        };
+
+        const onFocusIn = (event: FocusEvent) => {
+            const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-moliora-roomvo-launcher="true"]');
+            if (!target) return;
+            armNativeRoomvoLauncher(target);
         };
 
         const onClick = (event: MouseEvent) => {
             const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-moliora-roomvo-launcher="true"]');
             if (!target) return;
+
+            // If the native iframe was not armed (for example on touch), keep the
+            // shopper on Moliora and point them to Roomvo's already-working widget.
             event.preventDefault();
-            openDesignCenter();
+            window.alert('Tap the Roomvo “See our products in your space” button in the lower-right corner to open the Design Center.');
         };
 
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-moliora-roomvo-launcher="true"]');
-            if (!target) return;
-            event.preventDefault();
-            openDesignCenter();
-        };
-
-        const onCustomLaunch = () => openDesignCenter();
-
+        document.addEventListener('pointerover', onPointerEnter);
+        document.addEventListener('focusin', onFocusIn);
         document.addEventListener('click', onClick);
-        document.addEventListener('keydown', onKeyDown);
-        window.addEventListener('moliora:open-roomvo', onCustomLaunch as EventListener);
 
         return () => {
             observer.disconnect();
             window.clearInterval(interval);
             window.clearTimeout(timeout);
+            restoreFrame();
+            document.removeEventListener('pointerover', onPointerEnter);
+            document.removeEventListener('focusin', onFocusIn);
             document.removeEventListener('click', onClick);
-            document.removeEventListener('keydown', onKeyDown);
-            window.removeEventListener('moliora:open-roomvo', onCustomLaunch as EventListener);
-            document.documentElement.style.overflow = '';
         };
     }, [pathname]);
-
-    const closeDesignCenter = () => {
-        setRoomvoUrl(null);
-        document.documentElement.style.overflow = '';
-    };
 
     if (pathname !== '/flooring/lvp') return null;
 
     return (
-        <>
-            <Script
-                id="roomvoAssistant"
-                src="https://www.roomvo.com/static/scripts/b2b/common/assistant.js"
-                strategy="afterInteractive"
-                data-locale="en-us"
-                data-position="bottom-right"
-            />
-
-            {roomvoUrl && (
-                <div className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Moliora Design Center">
-                    <div className="flex h-full w-full flex-col bg-[#0f1111] sm:p-3">
-                        <div className="flex min-h-14 items-center justify-between border-b border-white/10 bg-[#0f1111] px-4 sm:rounded-t-xl sm:px-6">
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#d6ad63]">Moliora</p>
-                                <p className="text-sm font-semibold text-white">Design Center</p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={closeDesignCenter}
-                                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-xl text-white transition hover:border-[#d6ad63] hover:text-[#f0c978]"
-                                aria-label="Close Design Center"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <div className="min-h-0 flex-1 overflow-hidden bg-white sm:rounded-b-xl">
-                            <iframe
-                                key={roomvoUrl}
-                                src={roomvoUrl}
-                                title="Roomvo flooring visualizer"
-                                className="h-full w-full border-0"
-                                allow="camera; fullscreen; clipboard-read; clipboard-write"
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
+        <Script
+            id="roomvoAssistant"
+            src="https://www.roomvo.com/static/scripts/b2b/common/assistant.js"
+            strategy="afterInteractive"
+            data-locale="en-us"
+            data-position="bottom-right"
+        />
     );
 }
