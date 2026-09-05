@@ -20,26 +20,28 @@ function openRoomvo() {
         return;
     }
 
-    const roomvoTargets = Array.from(
-        document.querySelectorAll<HTMLElement>('[id*="roomvo" i], [class*="roomvo" i], [data-roomvo]')
-    ).filter(element => element.id !== 'roomvoAssistant' && isVisible(element));
+    const roomvoFrame = Array.from(document.querySelectorAll<HTMLIFrameElement>('iframe'))
+        .find(frame => /roomvo/i.test(frame.src));
 
-    const actionable = roomvoTargets.find(element => element.matches('button, a, [role="button"]')) ?? roomvoTargets.at(-1);
+    if (roomvoFrame?.src) {
+        const opened = window.open(roomvoFrame.src, '_blank', 'noopener,noreferrer');
+        if (opened) return;
+        window.location.href = roomvoFrame.src;
+        return;
+    }
+
+    const actionable = Array.from(
+        document.querySelectorAll<HTMLElement>('[id*="roomvo" i], [class*="roomvo" i], [data-roomvo]')
+    )
+        .filter(element => element.id !== 'roomvoAssistant' && isVisible(element))
+        .find(element => element.matches('button, a, [role="button"]'));
+
     if (actionable) {
         actionable.click();
         return;
     }
 
-    const roomvoFrame = Array.from(document.querySelectorAll<HTMLIFrameElement>('iframe'))
-        .find(frame => /roomvo/i.test(frame.src) && isVisible(frame));
-
-    if (roomvoFrame) {
-        roomvoFrame.focus();
-        roomvoFrame.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-        return;
-    }
-
-    window.alert('The Design Center is loading. Please use the Roomvo button in the lower-right corner.');
+    window.alert('The Design Center is still loading. Please use the Roomvo button in the lower-right corner for now.');
 }
 
 function activateDesignCenterUi() {
@@ -69,6 +71,15 @@ function activateDesignCenterUi() {
                 .replace('cursor-not-allowed', 'cursor-pointer')
                 .replace('text-white/45', 'text-white');
         }
+    }
+
+    const heroEstimate = document.querySelector<HTMLElement>('main a[href="#flooring-estimate"]');
+    if (heroEstimate) {
+        heroEstimate.className = heroEstimate.className
+            .replace('min-h-13', 'min-h-16')
+            .replace('px-6', 'px-9')
+            .replace('text-sm', 'text-base');
+        heroEstimate.classList.add('sm:px-10', 'sm:text-lg');
     }
 
     const heading = Array.from(document.querySelectorAll<HTMLElement>('h2'))
