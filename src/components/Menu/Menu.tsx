@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const links = [
@@ -12,6 +13,10 @@ const links = [
 
 export default function Menu() {
     const [open, setOpen] = useState(false);
+    const pathname = usePathname();
+    const isFlooringPage = pathname === '/flooring/lvp';
+    const estimateHref = isFlooringPage ? '/flooring/lvp#flooring-estimate' : '/contact';
+    const estimateLabel = isFlooringPage ? 'Get a Free Flooring Estimate' : 'Free Estimate';
 
     return (
         <header className="fixed top-0 z-50 w-full border-b border-white/10 bg-black/50 backdrop-blur-xl">
@@ -42,10 +47,10 @@ export default function Menu() {
                     ))}
 
                     <a
-                        href="/contact"
+                        href={estimateHref}
                         className="bg-[#d6ad63] px-5 py-3 text-xs font-bold uppercase tracking-[0.2em] text-black transition hover:bg-[#f0c978]"
                     >
-                        Free Estimate
+                        {estimateLabel}
                     </a>
                 </nav>
 
@@ -77,10 +82,11 @@ export default function Menu() {
                         ))}
 
                         <a
-                            href="/contact"
+                            href={estimateHref}
+                            onClick={() => setOpen(false)}
                             className="mt-5 bg-[#d6ad63] px-5 py-4 text-center text-xs font-bold uppercase tracking-[0.2em] text-black"
                         >
-                            Free Estimate
+                            {estimateLabel}
                         </a>
                     </nav>
                 </div>
