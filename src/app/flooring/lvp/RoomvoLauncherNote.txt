@@ -1,1 +1,0 @@
-Design Center launcher is activated client-side by RoomvoAssistant. This file can be removed after the page JSX is migrated to the dedicated RoomvoLaunchButton component.
