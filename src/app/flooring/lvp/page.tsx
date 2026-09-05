@@ -38,6 +38,13 @@ const faqs = [
     { q: 'Do you give estimates for small rooms and larger projects?', a: 'Yes. We review both smaller room projects and larger multi-room or whole-floor LVP installations in our service area.' },
 ];
 
+const floorTones = [
+    { name: 'Light Oak', note: 'Bright & modern', background: 'radial-gradient(ellipse at 30% 50%, transparent 0 18%, rgba(111,78,48,.28) 19% 21%, transparent 22% 38%), repeating-linear-gradient(96deg,#e3d2b9 0 13px,#c9ae8a 14px,#e5d6bf 17px)' },
+    { name: 'Natural Oak', note: 'Timeless & versatile', background: 'radial-gradient(ellipse at 65% 45%, transparent 0 16%, rgba(93,58,31,.30) 17% 19%, transparent 20% 34%), repeating-linear-gradient(94deg,#c9a177 0 12px,#a97a4e 13px,#d0aa80 16px)' },
+    { name: 'Warm Oak', note: 'Cozy & inviting', background: 'radial-gradient(ellipse at 35% 54%, transparent 0 18%, rgba(82,47,24,.34) 19% 21%, transparent 22% 36%), repeating-linear-gradient(93deg,#b47743 0 12px,#8e582f 13px,#c4874f 16px)' },
+    { name: 'Dark Oak', note: 'Bold & elegant', background: 'radial-gradient(ellipse at 68% 48%, transparent 0 17%, rgba(223,190,145,.16) 18% 20%, transparent 21% 35%), repeating-linear-gradient(95deg,#4e382d 0 12px,#2f241f 13px,#604638 16px)' },
+] as const;
+
 export default function LvpFlooringPage() {
     const serviceJsonLd = {
         '@context': 'https://schema.org',
@@ -52,36 +59,61 @@ export default function LvpFlooringPage() {
         <main className="min-h-screen bg-[#0f1111] text-white">
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
 
-            <section className="relative overflow-hidden border-b border-white/10 pt-20">
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_38%,rgba(214,173,99,.12),transparent_34%)]" />
-                <div className="relative mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:py-28">
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.32em] text-[#d6ad63]">Moliora Flooring</p>
-                        <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-6xl">Luxury Vinyl Plank Flooring Installation</h1>
-                        <p className="mt-5 max-w-2xl text-lg leading-8 text-white/70">Clean LVP installation, old flooring removal, floor preparation, baseboards and transitions for homes in Anoka, Ramsey and the North Twin Cities.</p>
+            <section className="relative isolate overflow-hidden border-b border-white/10 pt-20">
+                <div className="absolute inset-0 -z-30 bg-[url('/interior-construction.jpeg')] bg-cover bg-center" />
+                <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(8,9,9,.98)_0%,rgba(8,9,9,.92)_35%,rgba(8,9,9,.66)_62%,rgba(8,9,9,.44)_100%)]" />
+                <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(10,11,11,.08),rgba(10,11,11,.3)_55%,#0f1111_100%)]" />
+                <div className="pointer-events-none absolute -right-32 top-20 h-[520px] w-[520px] rounded-full bg-[#d6ad63]/10 blur-3xl" />
 
-                        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                            <a href="#flooring-estimate" className="inline-flex min-h-12 items-center justify-center bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black transition hover:bg-[#f0c978]">Get a Free Flooring Estimate</a>
-                            <span className="inline-flex min-h-12 cursor-not-allowed items-center justify-center border border-white/15 bg-white/[0.03] px-6 text-sm font-bold uppercase tracking-wider text-white/45" aria-disabled="true">Design Center — Coming Soon</span>
-                            <a href={phoneHref} className="inline-flex min-h-12 items-center justify-center border border-white/20 px-6 text-sm font-semibold text-white transition hover:border-[#d6ad63] hover:text-[#f0c978]">Call {phoneDisplay}</a>
+                <div className="relative mx-auto grid max-w-7xl gap-8 px-5 pb-10 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1.03fr_.97fr] lg:items-center lg:pb-14 lg:pt-24">
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.34em] text-[#e2bd72]">Moliora Flooring • North Twin Cities</p>
+                        <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-[1.02] sm:text-5xl lg:text-[4rem]">
+                            Luxury Vinyl Plank
+                            <span className="block text-[#e9c985]">Flooring Installation</span>
+                        </h1>
+                        <p className="mt-4 text-xl font-medium text-white/88">Beautiful. Durable. Built for real life.</p>
+                        <p className="mt-4 max-w-2xl text-base leading-7 text-white/72 sm:text-lg sm:leading-8">Professional LVP installation, old flooring removal, floor preparation, baseboards and transitions for homes in Anoka, Ramsey and the North Twin Cities.</p>
+
+                        <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                            <a href="#flooring-estimate" className="inline-flex min-h-13 items-center justify-center gap-2 bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black shadow-[0_12px_30px_rgba(214,173,99,.18)] transition hover:bg-[#f0c978]">Get a Free Flooring Estimate <span aria-hidden="true">→</span></a>
+                            <span className="inline-flex min-h-13 cursor-not-allowed items-center justify-center border border-white/25 bg-black/25 px-6 text-sm font-bold uppercase tracking-wider text-white/65 backdrop-blur-sm" aria-disabled="true">Design Center — Coming Soon</span>
+                            <a href={phoneHref} className="inline-flex min-h-13 items-center justify-center border border-white/20 bg-black/25 px-6 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-[#d6ad63] hover:text-[#f0c978]">Call {phoneDisplay}</a>
                         </div>
 
-                        <div className="mt-8 grid gap-3 text-sm text-white/65 sm:grid-cols-3">
-                            <div className="border-l-2 border-[#d6ad63] pl-3">Clear project scope</div>
-                            <div className="border-l-2 border-[#d6ad63] pl-3">Local Minnesota service</div>
-                            <div className="border-l-2 border-[#d6ad63] pl-3">Flooring-first estimate</div>
+                        <div className="mt-9 grid max-w-3xl grid-cols-2 gap-x-5 gap-y-4 text-sm text-white/72 sm:grid-cols-4">
+                            {['Clean installation', 'Floor prep available', 'Local Minnesota service', 'Clear estimates'].map((item, index) => (
+                                <div key={item} className="flex items-center gap-3">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d6ad63]/35 bg-[#d6ad63]/10 text-xs font-bold text-[#e9c985]">0{index + 1}</span>
+                                    <span>{item}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="relative">
+                    <div className="relative lg:translate-y-4">
                         <FlooringPlankFan />
-                        <div className="mx-auto -mt-2 max-w-md border border-white/10 bg-black/35 p-5 backdrop-blur">
-                            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#d6ad63]">Choose your look</p>
-                            <div className="mt-4 grid grid-cols-4 gap-2 text-center text-[11px] uppercase tracking-wide text-white/55">
-                                {['Light Oak', 'Natural', 'Warm', 'Dark'].map(item => <div key={item} className="border border-white/10 px-2 py-3">{item}</div>)}
-                            </div>
-                            <p className="mt-4 text-xs leading-5 text-white/45">Style preview only. Exact product color and finish are confirmed from manufacturer samples before ordering.</p>
+                        <p className="pointer-events-none absolute bottom-10 right-0 hidden rotate-[-4deg] text-right font-serif text-xl italic leading-6 text-white/70 xl:block">Your style<br />starts here</p>
+                    </div>
+                </div>
+
+                <div className="relative mx-auto max-w-7xl px-5 pb-10 sm:px-6 lg:pb-14">
+                    <div className="rounded-2xl border border-white/10 bg-black/65 p-5 shadow-2xl backdrop-blur-md sm:p-6 lg:grid lg:grid-cols-[.85fr_2.15fr] lg:gap-8 lg:p-7">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Popular Floor Tones</p>
+                            <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">Find the look that fits your home</h2>
+                            <p className="mt-3 max-w-md text-sm leading-6 text-white/55">From light and airy to rich and modern, start with a tone you like and we can match it to available product samples.</p>
                         </div>
+                        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:mt-0 lg:grid-cols-4">
+                            {floorTones.map(tone => (
+                                <div key={tone.name}>
+                                    <div className="h-24 rounded-lg border border-white/15 shadow-inner" style={{ background: tone.background }} />
+                                    <p className="mt-2 font-semibold">{tone.name}</p>
+                                    <p className="mt-1 text-xs text-white/45">{tone.note}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <p className="mt-5 text-xs text-white/35 lg:col-start-2 lg:text-right">Style preview only — final product selected from available physical samples.</p>
                     </div>
                 </div>
             </section>
@@ -99,10 +131,7 @@ export default function LvpFlooringPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         {['Upload your room', 'Outline the floor', 'Choose approved flooring', 'Request estimate'].map((item, index) => (
-                            <div key={item} className="border border-white/10 bg-black/20 p-5">
-                                <span className="text-[#d6ad63]">0{index + 1}</span>
-                                <p className="mt-2 font-semibold">{item}</p>
-                            </div>
+                            <div key={item} className="border border-white/10 bg-black/20 p-5"><span className="text-[#d6ad63]">0{index + 1}</span><p className="mt-2 font-semibold">{item}</p></div>
                         ))}
                     </div>
                 </div>
@@ -113,10 +142,7 @@ export default function LvpFlooringPage() {
                 <h2 className="mt-3 max-w-2xl text-3xl font-semibold sm:text-4xl">What we can handle</h2>
                 <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {capabilities.map(item => (
-                        <article key={item.title} className="border border-white/10 bg-white/[0.025] p-6 transition duration-300 hover:-translate-y-1 hover:border-[#d6ad63]/40 hover:bg-white/[0.045]">
-                            <h3 className="text-xl font-semibold">{item.title}</h3>
-                            <p className="mt-3 text-sm leading-6 text-white/65">{item.text}</p>
-                        </article>
+                        <article key={item.title} className="border border-white/10 bg-white/[0.025] p-6 transition duration-300 hover:-translate-y-1 hover:border-[#d6ad63]/40 hover:bg-white/[0.045]"><h3 className="text-xl font-semibold">{item.title}</h3><p className="mt-3 text-sm leading-6 text-white/65">{item.text}</p></article>
                     ))}
                 </div>
             </section>
@@ -126,60 +152,22 @@ export default function LvpFlooringPage() {
                     <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Simple Process</p>
                     <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">How it works</h2>
                     <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        {steps.map(([number, title, text]) => (
-                            <div key={number} className="border-t border-[#d6ad63]/60 pt-5">
-                                <span className="text-sm font-bold text-[#d6ad63]">{number}</span>
-                                <h3 className="mt-2 text-lg font-semibold">{title}</h3>
-                                <p className="mt-2 text-sm leading-6 text-white/60">{text}</p>
-                            </div>
-                        ))}
+                        {steps.map(([number, title, text]) => <div key={number} className="border-t border-[#d6ad63]/60 pt-5"><span className="text-sm font-bold text-[#d6ad63]">{number}</span><h3 className="mt-2 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-white/60">{text}</p></div>)}
                     </div>
                 </div>
             </section>
 
             <section className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
-                <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Local Flooring Help</p>
-                    <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Built around a clear estimate</h2>
-                    <div className="mt-6 space-y-4 text-white/65">
-                        <p>We separate installation, demolition, floor preparation and trim so the project scope is easier to understand.</p>
-                        <p>If hidden subfloor conditions are uncovered after removal, the affected work is reviewed before additional repairs are performed.</p>
-                        <p>Current target service area includes Anoka, Ramsey, Andover, Coon Rapids, Blaine, Champlin and nearby North Twin Cities communities.</p>
-                    </div>
-                </div>
-                <div className="border border-white/10 bg-white/[0.03] p-6 sm:p-8">
-                    <h3 className="text-2xl font-semibold">Good fit for your project?</h3>
-                    <p className="mt-3 leading-7 text-white/65">Send the approximate size and current flooring type. We can use that information to decide the next step and schedule an on-site estimate when needed.</p>
-                    <a href="#flooring-estimate" className="mt-6 inline-flex min-h-12 items-center justify-center bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black hover:bg-[#f0c978]">Request Estimate</a>
-                </div>
+                <div><p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Local Flooring Help</p><h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Built around a clear estimate</h2><div className="mt-6 space-y-4 text-white/65"><p>We separate installation, demolition, floor preparation and trim so the project scope is easier to understand.</p><p>If hidden subfloor conditions are uncovered after removal, the affected work is reviewed before additional repairs are performed.</p><p>Current target service area includes Anoka, Ramsey, Andover, Coon Rapids, Blaine, Champlin and nearby North Twin Cities communities.</p></div></div>
+                <div className="border border-white/10 bg-white/[0.03] p-6 sm:p-8"><h3 className="text-2xl font-semibold">Good fit for your project?</h3><p className="mt-3 leading-7 text-white/65">Send the approximate size and current flooring type. We can use that information to decide the next step and schedule an on-site estimate when needed.</p><a href="#flooring-estimate" className="mt-6 inline-flex min-h-12 items-center justify-center bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black hover:bg-[#f0c978]">Request Estimate</a></div>
             </section>
 
             <section className="border-y border-white/10 bg-white/[0.02]">
-                <div className="mx-auto max-w-4xl px-5 py-16 sm:px-6 lg:py-24">
-                    <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">FAQ</p>
-                    <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Common LVP questions</h2>
-                    <div className="mt-8 divide-y divide-white/10 border-y border-white/10">
-                        {faqs.map(item => (
-                            <details key={item.q} className="group py-5">
-                                <summary className="cursor-pointer list-none pr-8 text-lg font-semibold marker:hidden">{item.q}</summary>
-                                <p className="mt-3 max-w-3xl text-sm leading-6 text-white/65">{item.a}</p>
-                            </details>
-                        ))}
-                    </div>
-                </div>
+                <div className="mx-auto max-w-4xl px-5 py-16 sm:px-6 lg:py-24"><p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">FAQ</p><h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Common LVP questions</h2><div className="mt-8 divide-y divide-white/10 border-y border-white/10">{faqs.map(item => <details key={item.q} className="group py-5"><summary className="cursor-pointer list-none pr-8 text-lg font-semibold marker:hidden">{item.q}</summary><p className="mt-3 max-w-3xl text-sm leading-6 text-white/65">{item.a}</p></details>)}</div></div>
             </section>
 
             <section id="flooring-estimate" className="scroll-mt-24">
-                <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:py-24">
-                    <div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr]">
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Free Estimate Request</p>
-                            <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Tell us about your floor</h2>
-                            <p className="mt-4 max-w-lg leading-7 text-white/65">Approximate information is enough. We can confirm measurements and project details before final pricing.</p>
-                        </div>
-                        <LvpLeadForm />
-                    </div>
-                </div>
+                <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:py-24"><div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr]"><div><p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Free Estimate Request</p><h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Tell us about your floor</h2><p className="mt-4 max-w-lg leading-7 text-white/65">Approximate information is enough. We can confirm measurements and project details before final pricing.</p></div><LvpLeadForm /></div></div>
             </section>
         </main>
     );
