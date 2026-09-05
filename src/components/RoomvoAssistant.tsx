@@ -112,8 +112,11 @@ export default function RoomvoAssistant() {
             openRoomvo();
         };
 
+        const onCustomLaunch = () => openRoomvo();
+
         document.addEventListener('click', onClick);
         document.addEventListener('keydown', onKeyDown);
+        window.addEventListener('moliora:open-roomvo', onCustomLaunch as EventListener);
 
         return () => {
             observer.disconnect();
@@ -121,6 +124,7 @@ export default function RoomvoAssistant() {
             window.clearTimeout(timeout);
             document.removeEventListener('click', onClick);
             document.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('moliora:open-roomvo', onCustomLaunch as EventListener);
         };
     }, [pathname]);
 
