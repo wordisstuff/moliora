@@ -5,6 +5,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/context/themeContext';
 import Menu from '@/components/Menu/Menu';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import RoomvoAssistant from '@/components/RoomvoAssistant';
 import Providers from './providers';
 import { email, phoneE164 } from '@/config/company';
 
@@ -110,6 +111,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <html lang="en" className={initialTheme} suppressHydrationWarning>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} id="top">
                 <GoogleAnalytics />
+                <RoomvoAssistant />
                 <script
                     type="application/ld+json"
                     suppressHydrationWarning
