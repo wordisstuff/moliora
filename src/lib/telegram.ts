@@ -13,6 +13,9 @@ type TelegramLead = {
     existingFlooring?: string;
     demolition?: string;
     materialSupply?: string;
+    sourceType?: string;
+    callSid?: string;
+    vapiCallId?: string;
     callSummary?: string;
     callTranscript?: string;
     recordingUrl?: string;
@@ -113,7 +116,7 @@ function leadMessage(lead: TelegramLead) {
             ? `<b>Call:</b> ${Math.round(lead.callDurationSeconds)} sec`
             : '',
         summary ? `\n<b>Summary:</b>\n${escapeHtml(summary.slice(0, 2200))}` : '',
-        transcript && transcript !== summary ? `\n<b>Transcript:</b>\n${escapeHtml(transcript.slice(0, 1200))}${transcript.length > 1200 ? '…' : ''}` : '',
+        transcript && transcript !== summary ? `\n<b>Transcript:</b>\n${escapeHtml(transcript.slice(0, 1800))}${transcript.length > 1800 ? '…' : ''}` : '',
         leadId ? `\n<code>Lead ${escapeHtml(leadId)}</code>` : '',
     ].filter(Boolean);
 
@@ -125,7 +128,8 @@ export async function sendTelegramLeadNotification(lead: TelegramLead) {
     if (!botToken() || !chatId) return { ok: false, skipped: true } as const;
 
     const leadId = lead._id ? String(lead._id) : '';
-    const inline_keyboard = leadId
+    const isPhoneLead = clean(lead.sourceType) === 'vapi_phone_assistant' || clean(lead.sourceType) === 'phone_assistant';
+    const inline_keyboard = leadId && isPhoneLead
         ? [[{ text: '🎧 Get voice', callback_data: `voice:${leadId}` }]]
         : undefined;
 
@@ -140,13 +144,13 @@ export async function sendTelegramLeadNotification(lead: TelegramLead) {
     return { ok: result.ok, skipped: false, messageId: result.result?.message_id } as const;
 }
 
-async function telegramUploadVoice(chatId: string | number, bytes: ArrayBuffer, filename: string, caption?: string) {
+async function telegramUploadVoice(chatId: string | number, bytes: ArrayBuffer, filename: string, caption?: string, mimeType = 'audio/mpeg') {
     const token = botToken();
     if (!token) return { ok: false, description: 'TELEGRAM_BOT_TOKEN is not configured.' };
 
     const form = new FormData();
     form.set('chat_id', String(chatId));
-    form.set('voice', new Blob([bytes], { type: 'audio/mpeg' }), filename);
+    form.set('voice', new Blob([bytes], { type: mimeType }), filename);
     if (caption) form.set('caption', caption.slice(0, 1024));
 
     try {
@@ -162,11 +166,35 @@ async function telegramUploadVoice(chatId: string | number, bytes: ArrayBuffer, 
     }
 }
 
+export async function sendTelegramVapiVoice(chatId: string | number, callId: string, caption?: string) {
+    const vapiCallId = clean(callId);
+    const apiKey = clean(process.env.VAPI_PRIVATE_API_KEY);
+    if (!vapiCallId) return { ok: false, description: 'Vapi call ID is missing.' };
+    if (!apiKey) return { ok: false, description: 'VAPI_PRIVATE_API_KEY is not configured.' };
+
+    try {
+        const response = await fetch(`https://api.vapi.ai/call/${encodeURIComponent(vapiCallId)}/mono-recording`, {
+            headers: { authorization: `Bearer ${apiKey}` },
+            redirect: 'follow',
+            cache: 'no-store',
+        });
+        if (!response.ok) {
+            console.error('telegram.vapi_recording_fetch_failed', { status: response.status, callId: vapiCallId });
+            return { ok: false, description: 'Unable to fetch Vapi recording.' };
+        }
+        const contentType = response.headers.get('content-type') || 'audio/mpeg';
+        const extension = contentType.includes('wav') ? 'wav' : 'mp3';
+        return telegramUploadVoice(chatId, await response.arrayBuffer(), `moliora-vapi-call.${extension}`, caption, contentType);
+    } catch (error) {
+        console.error('telegram.vapi_recording_fetch_failed', { errorType: error instanceof Error ? error.name : 'UnknownError', callId: vapiCallId });
+        return { ok: false, description: 'Unable to fetch Vapi recording.' };
+    }
+}
+
 export async function sendTelegramVoice(chatId: string | number, recordingUrl: string, caption?: string) {
     const url = clean(recordingUrl);
     if (!url) return { ok: false, description: 'Recording is not available yet.' };
 
-    // First let Telegram fetch a public recording URL directly.
     const direct = await telegramRequest('sendVoice', {
         chat_id: chatId,
         voice: url,
@@ -174,8 +202,6 @@ export async function sendTelegramVoice(chatId: string | number, recordingUrl: s
     });
     if (direct.ok) return direct;
 
-    // Twilio recording media commonly requires HTTP Basic Auth. If credentials are
-    // configured, fetch the media server-side and upload the bytes to Telegram.
     const sid = clean(process.env.TWILIO_ACCOUNT_SID);
     const authToken = clean(process.env.TWILIO_AUTH_TOKEN);
     if (!sid || !authToken) return direct;
@@ -187,13 +213,9 @@ export async function sendTelegramVoice(chatId: string | number, recordingUrl: s
             headers: { authorization: `Basic ${auth}` },
             cache: 'no-store',
         });
-        if (!response.ok) {
-            console.error('telegram.recording_fetch_failed', { status: response.status });
-            return { ok: false, description: 'Unable to fetch the call recording.' };
-        }
+        if (!response.ok) return { ok: false, description: 'Unable to fetch the call recording.' };
         return telegramUploadVoice(chatId, await response.arrayBuffer(), 'moliora-call.mp3', caption);
-    } catch (error) {
-        console.error('telegram.recording_fetch_failed', { errorType: error instanceof Error ? error.name : 'UnknownError' });
+    } catch {
         return { ok: false, description: 'Unable to fetch the call recording.' };
     }
 }
