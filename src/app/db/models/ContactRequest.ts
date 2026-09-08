@@ -1,5 +1,6 @@
 // src/models/ContactRequest.ts
 import mongoose, { Schema, InferSchemaType, Model } from 'mongoose';
+import { sendTelegramLeadNotification } from '@/lib/telegram';
 
 export const LEAD_STATUSES = ['New', 'Contacted', 'Qualified', 'Estimate Scheduled', 'Estimate Sent', 'Won', 'Lost'] as const;
 
@@ -54,6 +55,20 @@ const contactRequestSchema = new Schema(
     },
     { timestamps: true, versionKey: false },
 );
+
+// Every newly-created lead—website form or Henry phone assistant—gets the same
+// Telegram notification. Telegram is deliberately fail-soft so a bot outage can
+// never prevent a customer request from being saved.
+contactRequestSchema.post('save', async function notifyTelegram(doc) {
+    try {
+        await sendTelegramLeadNotification(doc.toObject());
+    } catch (error) {
+        console.error('lead.telegram_notification_failed', {
+            errorType: error instanceof Error ? error.name : 'UnknownError',
+            leadId: String(doc._id),
+        });
+    }
+});
 
 export type ContactRequest = InferSchemaType<typeof contactRequestSchema>;
 
