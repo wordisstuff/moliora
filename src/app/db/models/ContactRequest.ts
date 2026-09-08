@@ -30,10 +30,11 @@ const contactRequestSchema = new Schema(
         gclid: { type: String, default: '' },
         landingPage: { type: String, default: '' },
 
-        // Henry phone-assistant metadata. A call can be created before Twilio has
-        // finished processing the recording; the recording webhook fills it in later.
+        // Phone-assistant metadata. `vapiCallId` is the durable key used to fetch
+        // call artifacts on demand when Henry taps "Get voice" in Telegram.
         sourceType: { type: String, default: '' },
         callSid: { type: String, default: '', index: true },
+        vapiCallId: { type: String, default: '', index: true },
         callSummary: { type: String, default: '' },
         callTranscript: { type: String, default: '' },
         recordingUrl: { type: String, default: '' },
@@ -56,9 +57,8 @@ const contactRequestSchema = new Schema(
     { timestamps: true, versionKey: false },
 );
 
-// Every newly-created lead—website form or Henry phone assistant—gets the same
-// Telegram notification. Telegram is deliberately fail-soft so a bot outage can
-// never prevent a customer request from being saved.
+// Every newly-created lead gets a fail-soft Telegram notification. The Telegram
+// helper decides whether phone-only actions such as "Get voice" should be shown.
 contactRequestSchema.post('save', async function notifyTelegram(doc) {
     try {
         await sendTelegramLeadNotification(doc.toObject());
@@ -77,7 +77,7 @@ const requiredSchemaPaths = [
     'consent', 'consentTimestamp', 'consentVersion', 'leadSource', 'approximateArea',
     'existingFlooring', 'demolition', 'materialSupply', 'utmSource', 'utmMedium',
     'utmCampaign', 'utmTerm', 'utmContent', 'gclid', 'landingPage', 'sourceType',
-    'callSid', 'callSummary', 'callTranscript', 'recordingUrl', 'recordingSid',
+    'callSid', 'vapiCallId', 'callSummary', 'callTranscript', 'recordingUrl', 'recordingSid',
     'callDurationSeconds', 'status', 'estimatedValue', 'finalJobValue', 'notes',
     'statusUpdatedAt', 'wonAt', 'lostAt',
 ] as const;
