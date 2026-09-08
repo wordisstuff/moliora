@@ -2,7 +2,6 @@ import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { initMongoDB } from '@/app/db/initDb';
 import { ContactRequestModel } from '@/app/db/models/ContactRequest';
-import { sendTelegramLeadNotification } from '@/lib/telegram';
 
 type AssistantIntakePayload = {
     name?: unknown;
@@ -99,13 +98,6 @@ export async function POST(req: NextRequest) {
             : await ContactRequestModel.create(values);
 
         if (!doc) throw new Error('Unable to save phone lead');
-
-        try {
-            await sendTelegramLeadNotification(doc.toObject());
-        } catch (error) {
-            console.error('assistant.telegram_notification_failed', { errorType: error instanceof Error ? error.name : 'UnknownError', leadId: String(doc._id) });
-        }
-
         return NextResponse.json({ success: true, leadId: String(doc._id) }, { status: existing ? 200 : 201 });
     } catch (error) {
         console.error('assistant.intake_failed', { errorType: error instanceof Error ? error.name : 'UnknownError' });
