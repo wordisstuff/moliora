@@ -29,6 +29,16 @@ const contactRequestSchema = new Schema(
         gclid: { type: String, default: '' },
         landingPage: { type: String, default: '' },
 
+        // Henry phone-assistant metadata. A call can be created before Twilio has
+        // finished processing the recording; the recording webhook fills it in later.
+        sourceType: { type: String, default: '' },
+        callSid: { type: String, default: '', index: true },
+        callSummary: { type: String, default: '' },
+        callTranscript: { type: String, default: '' },
+        recordingUrl: { type: String, default: '' },
+        recordingSid: { type: String, default: '' },
+        callDurationSeconds: { type: Number, default: 0, min: 0 },
+
         // Lightweight CRM fields. They live on the same lead record so attribution
         // stays connected all the way from the ad click to a won job.
         status: { type: String, enum: LEAD_STATUSES, default: 'New', index: true },
@@ -51,8 +61,10 @@ const cachedModel = mongoose.models.ContactRequest as Model<ContactRequest> | un
 const requiredSchemaPaths = [
     'consent', 'consentTimestamp', 'consentVersion', 'leadSource', 'approximateArea',
     'existingFlooring', 'demolition', 'materialSupply', 'utmSource', 'utmMedium',
-    'utmCampaign', 'utmTerm', 'utmContent', 'gclid', 'landingPage', 'status',
-    'estimatedValue', 'finalJobValue', 'notes', 'statusUpdatedAt', 'wonAt', 'lostAt',
+    'utmCampaign', 'utmTerm', 'utmContent', 'gclid', 'landingPage', 'sourceType',
+    'callSid', 'callSummary', 'callTranscript', 'recordingUrl', 'recordingSid',
+    'callDurationSeconds', 'status', 'estimatedValue', 'finalJobValue', 'notes',
+    'statusUpdatedAt', 'wonAt', 'lostAt',
 ] as const;
 const hasCurrentSchema = cachedModel && requiredSchemaPaths.every(path => cachedModel.schema.path(path)) && !cachedModel.schema.path('budget');
 
