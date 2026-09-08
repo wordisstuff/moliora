@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,9 +28,10 @@ function safeChat(chat?: TelegramChat) {
     };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     const token = process.env.TELEGRAM_BOT_TOKEN || '';
     const configuredChatId = process.env.TELEGRAM_CHAT_ID || '';
+    const shouldSend = req.nextUrl.searchParams.get('send') === '1';
 
     if (!token) {
         return NextResponse.json(
@@ -84,6 +85,40 @@ export async function GET() {
             ? chats.find(chat => chat?.id === configuredNumeric) || null
             : null;
 
+        let sendTest: null | {
+            attempted: boolean;
+            ok: boolean;
+            messageId?: number;
+            error?: string;
+        } = null;
+
+        if (shouldSend) {
+            if (!configuredChatId) {
+                sendTest = { attempted: false, ok: false, error: 'TELEGRAM_CHAT_ID is not configured.' };
+            } else {
+                const sendResponse = await fetch(`${base}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: configuredChatId,
+                        text: '🧪 mOliora Telegram test\nHenry Assistant connection is working.',
+                    }),
+                    cache: 'no-store',
+                });
+                const sent = await sendResponse.json() as {
+                    ok?: boolean;
+                    result?: { message_id?: number };
+                    description?: string;
+                };
+                sendTest = {
+                    attempted: true,
+                    ok: Boolean(sent.ok),
+                    ...(sent.result?.message_id ? { messageId: sent.result.message_id } : {}),
+                    ...(!sent.ok ? { error: sent.description || 'Telegram sendMessage failed.' } : {}),
+                };
+            }
+        }
+
         return NextResponse.json({
             ok: Boolean(me.ok),
             bot: me.result
@@ -98,9 +133,14 @@ export async function GET() {
             recentChats: chats,
             updatesOk: Boolean(updates.ok),
             updatesError: updates.ok ? null : updates.description || 'Unable to read updates.',
-            hint: chats.length
-                ? 'Find mOliora Leads in recentChats and copy its id into TELEGRAM_CHAT_ID.'
-                : 'No chats found yet. Send /test in the mOliora Leads group, then refresh this page. If updatesError says a webhook is active, we will diagnose via the webhook instead.',
+            sendTest,
+            hint: shouldSend
+                ? (sendTest?.ok
+                    ? 'Test message sent. Check the mOliora Leads group.'
+                    : 'Test message was not sent. Check sendTest.error.')
+                : (chats.length
+                    ? 'Telegram is configured. Add ?send=1 to this URL to send a smoke-test message.'
+                    : 'No chats found yet. Send /test in the mOliora Leads group, then refresh this page. If updatesError says a webhook is active, we will diagnose via the webhook instead.'),
         });
     } catch (error) {
         return NextResponse.json(
