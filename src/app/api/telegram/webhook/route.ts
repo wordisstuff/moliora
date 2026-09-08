@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initMongoDB } from '@/app/db/initDb';
 import { ContactRequestModel } from '@/app/db/models/ContactRequest';
-import { answerTelegramCallback, sendTelegramText, sendTelegramVoice } from '@/lib/telegram';
+import { answerTelegramCallback, sendTelegramText, sendTelegramVapiVoice, sendTelegramVoice } from '@/lib/telegram';
 
 type TelegramUpdate = {
     callback_query?: {
@@ -46,16 +46,20 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ ok: true });
             }
 
-            if (!lead.recordingUrl) {
-                await answerTelegramCallback(callbackId, 'Voice recording is not ready yet. Try again shortly.', true);
-                return NextResponse.json({ ok: true });
-            }
-
             await answerTelegramCallback(callbackId, 'Sending voice…');
             const caption = `${lead.name || 'Caller'}${lead.phone ? ` • ${lead.phone}` : ''}`;
-            const sent = await sendTelegramVoice(chatId, lead.recordingUrl, caption);
+
+            const sent = lead.vapiCallId
+                ? await sendTelegramVapiVoice(chatId, lead.vapiCallId, caption)
+                : lead.recordingUrl
+                    ? await sendTelegramVoice(chatId, lead.recordingUrl, caption)
+                    : { ok: false, description: 'Recording is not ready yet.' };
+
             if (!sent.ok) {
-                await sendTelegramText(chatId, '<b>Could not send the voice recording.</b> Check the recording/Twilio credentials and try again.');
+                await sendTelegramText(
+                    chatId,
+                    '<b>Could not send the voice recording.</b> It may still be processing, or the Vapi private API key/recording setting may need attention.',
+                );
             }
         } catch (error) {
             console.error('telegram.voice_callback_failed', { errorType: error instanceof Error ? error.name : 'UnknownError' });
