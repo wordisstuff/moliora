@@ -30,7 +30,6 @@ function escapeHtml(value: string) {
 }
 
 function dayRange(offsetDays = 0) {
-    // Business timezone is Minnesota / America-Chicago. Convert local midnight boundaries to UTC.
     const now = new Date();
     const parts = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -43,7 +42,6 @@ function dayRange(offsetDays = 0) {
     }).formatToParts(localNoon);
     const t = Object.fromEntries(target.map(p => [p.type, p.value]));
     const ymd = `${t.year}-${t.month}-${t.day}`;
-    // Intl resolves DST correctly by finding the UTC instants corresponding to Chicago midnight.
     const midnightUtc = (date: string) => {
         const probe = new Date(`${date}T06:00:00Z`);
         const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: '2-digit', hour12: false }).format(probe)) % 24;
@@ -77,10 +75,7 @@ async function handleHistory(chatId: string | number, text: string) {
     const range = dayRange(command.yesterday ? -1 : 0);
     const leads = await ContactRequestModel.find({
         createdAt: { $gte: range.start, $lt: range.end },
-        $or: [
-            { sourceType: { $in: ['vapi_phone_assistant', 'phone_assistant'] } },
-            { vapiCallId: { $ne: '' } },
-        ],
+        sourceType: { $in: ['vapi_phone_assistant', 'phone_assistant'] },
     }).sort({ createdAt: 1 }).limit(50).lean();
 
     if (!leads.length) {
