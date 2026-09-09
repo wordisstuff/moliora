@@ -110,6 +110,26 @@ async function handleHistory(chatId: string | number, text: string) {
     }
 }
 
+async function handleTranscriptCallback(chatId: string | number, callbackId: string, leadId: string) {
+    await initMongoDB();
+    const lead = await ContactRequestModel.findById(leadId).lean();
+    if (!lead) {
+        await answerTelegramCallback(callbackId, 'Lead not found.', true);
+        return;
+    }
+
+    const transcript = String(lead.callTranscript || '').trim();
+    await answerTelegramCallback(callbackId, transcript ? 'Sending transcript…' : 'No transcript available.', !transcript);
+    if (!transcript) return;
+
+    const header = `<b>📄 Transcript</b>\n${escapeHtml(lead.name || 'Caller')}${lead.phone ? ` • ${escapeHtml(lead.phone)}` : ''}`;
+    const maxChunk = 3500;
+    for (let offset = 0; offset < transcript.length; offset += maxChunk) {
+        const chunk = transcript.slice(offset, offset + maxChunk);
+        await sendTelegramText(chatId, `${offset === 0 ? `${header}\n\n` : ''}${escapeHtml(chunk)}${offset + maxChunk < transcript.length ? '…' : ''}`);
+    }
+}
+
 export async function POST(req: NextRequest) {
     if (!webhookAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
     let update: TelegramUpdate;
@@ -133,7 +153,15 @@ export async function POST(req: NextRequest) {
     const chatId = callback?.message?.chat?.id;
     if (!callbackId || !data || chatId == null || !allowedChat(chatId)) return NextResponse.json({ ok: true });
 
-    if (data.startsWith('voice:')) {
+    if (data.startsWith('transcript:')) {
+        const leadId = data.slice('transcript:'.length);
+        try {
+            await handleTranscriptCallback(chatId, callbackId, leadId);
+        } catch (error) {
+            console.error('telegram.transcript_callback_failed', { errorType: error instanceof Error ? error.name : 'UnknownError' });
+            await answerTelegramCallback(callbackId, 'Unable to load transcript.', true);
+        }
+    } else if (data.startsWith('voice:')) {
         const leadId = data.slice('voice:'.length);
         try {
             await initMongoDB();

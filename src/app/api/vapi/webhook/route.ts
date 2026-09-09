@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const name = firstText(structured.name, structured.customerName, customer.name) || 'Phone caller';
     const email = firstText(structured.email, structured.customerEmail).toLowerCase();
     const location = firstText(structured.location, structured.city, structured.zip, structured.zipCode);
-    const service = firstText(structured.service, structured.projectType) || 'LVP Flooring';
+    const service = firstText(structured.service, structured.projectType);
     const approximateArea = firstText(structured.approximateArea, structured.area, structured.squareFeet, structured.sqft);
     const existingFlooring = firstText(structured.existingFlooring, structured.existingFloor);
     const demolition = firstText(structured.demolition, structured.removalNeeded, structured.removal);
