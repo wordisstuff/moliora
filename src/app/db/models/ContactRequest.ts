@@ -1,5 +1,6 @@
 // src/models/ContactRequest.ts
 import mongoose, { Schema, InferSchemaType, Model } from 'mongoose';
+import { sendTelegramLeadNotification } from '@/lib/telegram';
 
 export const LEAD_STATUSES = ['New', 'Contacted', 'Qualified', 'Estimate Scheduled', 'Estimate Sent', 'Won', 'Lost'] as const;
 
@@ -52,9 +53,16 @@ const contactRequestSchema = new Schema(
     { timestamps: true, versionKey: false },
 );
 
-// Telegram delivery for phone calls is owned by Henry Backend now. Website forms
-// remain email/CRM only, and routed phone leads can be stored here without causing
-// a second Telegram notification.
+contactRequestSchema.post('save', async function notifyTelegram(doc) {
+    try {
+        await sendTelegramLeadNotification(doc.toObject());
+    } catch (error) {
+        console.error('lead.telegram_notification_failed', {
+            errorType: error instanceof Error ? error.name : 'UnknownError',
+            leadId: String(doc._id),
+        });
+    }
+});
 
 export type ContactRequest = InferSchemaType<typeof contactRequestSchema>;
 
