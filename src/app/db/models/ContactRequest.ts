@@ -1,6 +1,5 @@
 // src/models/ContactRequest.ts
 import mongoose, { Schema, InferSchemaType, Model } from 'mongoose';
-import { sendTelegramLeadNotification } from '@/lib/telegram';
 
 export const LEAD_STATUSES = ['New', 'Contacted', 'Qualified', 'Estimate Scheduled', 'Estimate Sent', 'Won', 'Lost'] as const;
 
@@ -30,8 +29,6 @@ const contactRequestSchema = new Schema(
         gclid: { type: String, default: '' },
         landingPage: { type: String, default: '' },
 
-        // Phone-assistant metadata. `vapiCallId` is the durable key used to fetch
-        // call artifacts on demand when Henry taps "Get voice" in Telegram.
         sourceType: { type: String, default: '' },
         callSid: { type: String, default: '', index: true },
         vapiCallId: { type: String, default: '', index: true },
@@ -41,8 +38,6 @@ const contactRequestSchema = new Schema(
         recordingSid: { type: String, default: '' },
         callDurationSeconds: { type: Number, default: 0, min: 0 },
 
-        // Lightweight CRM fields. They live on the same lead record so attribution
-        // stays connected all the way from the ad click to a won job.
         status: { type: String, enum: LEAD_STATUSES, default: 'New', index: true },
         estimatedValue: { type: Number, default: 0, min: 0 },
         finalJobValue: { type: Number, default: 0, min: 0 },
@@ -57,18 +52,9 @@ const contactRequestSchema = new Schema(
     { timestamps: true, versionKey: false },
 );
 
-// Every newly-created lead gets a fail-soft Telegram notification. The Telegram
-// helper decides whether phone-only actions such as "Get voice" should be shown.
-contactRequestSchema.post('save', async function notifyTelegram(doc) {
-    try {
-        await sendTelegramLeadNotification(doc.toObject());
-    } catch (error) {
-        console.error('lead.telegram_notification_failed', {
-            errorType: error instanceof Error ? error.name : 'UnknownError',
-            leadId: String(doc._id),
-        });
-    }
-});
+// Telegram delivery for phone calls is owned by Henry Backend now. Website forms
+// remain email/CRM only, and routed phone leads can be stored here without causing
+// a second Telegram notification.
 
 export type ContactRequest = InferSchemaType<typeof contactRequestSchema>;
 
