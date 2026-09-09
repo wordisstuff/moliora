@@ -89,6 +89,37 @@ export async function sendTelegramText(chatId: string | number, text: string) {
     });
 }
 
+function isSpamLead(lead: TelegramLead) {
+    const service = clean(lead.service).toLowerCase();
+    const summary = clean(lead.callSummary).toLowerCase();
+    const message = clean(lead.message).toLowerCase();
+    const transcript = clean(lead.callTranscript).toLowerCase();
+    const combined = `${service}\n${summary}\n${message}`;
+
+    // Prefer explicit routing/classification produced by the phone assistant.
+    if (/\broute\s*:\s*(spam|unrelated)\b/i.test(combined)) return true;
+    if (/\bintent\s*:\s*(spam|unrelated)\b/i.test(combined)) return true;
+    if (/^(spam|unrelated)(\s+call)?$/i.test(service)) return true;
+    if (/\b(classified|marked|identified|detected)\s+as\s+spam\b/i.test(combined)) return true;
+
+    // End-of-call reports may not carry the live route field. Keep this fallback
+    // conservative so a real customer who merely says the word "spam" is not hidden.
+    return /\b(spam call|telemarketing call|robocall|unsolicited sales call)\b/i.test(`${summary}\n${message}\n${transcript}`);
+}
+
+function spamMessage(lead: TelegramLead) {
+    const phone = clean(lead.phone) || 'Unknown number';
+    const duration = typeof lead.callDurationSeconds === 'number' && lead.callDurationSeconds > 0
+        ? `\n<b>Duration:</b> ${Math.round(lead.callDurationSeconds)} sec`
+        : '';
+
+    return [
+        '<b>🚫 Spam call</b>',
+        `<b>Phone:</b> ${escapeHtml(phone)}`,
+        duration,
+    ].filter(Boolean).join('\n');
+}
+
 function leadMessage(lead: TelegramLead) {
     const name = clean(lead.name) || 'Unknown caller';
     const phone = clean(lead.phone);
@@ -127,15 +158,16 @@ export async function sendTelegramLeadNotification(lead: TelegramLead) {
     const chatId = clean(process.env.TELEGRAM_CHAT_ID);
     if (!botToken() || !chatId) return { ok: false, skipped: true } as const;
 
+    const spam = isSpamLead(lead);
     const leadId = lead._id ? String(lead._id) : '';
     const isPhoneLead = clean(lead.sourceType) === 'vapi_phone_assistant' || clean(lead.sourceType) === 'phone_assistant';
-    const inline_keyboard = leadId && isPhoneLead
+    const inline_keyboard = leadId && isPhoneLead && !spam
         ? [[{ text: '🎧 Get voice', callback_data: `voice:${leadId}` }]]
         : undefined;
 
     const result = await telegramRequest<{ message_id: number }>('sendMessage', {
         chat_id: chatId,
-        text: leadMessage(lead),
+        text: spam ? spamMessage(lead) : leadMessage(lead),
         parse_mode: 'HTML',
         disable_web_page_preview: true,
         ...(inline_keyboard ? { reply_markup: { inline_keyboard } } : {}),
