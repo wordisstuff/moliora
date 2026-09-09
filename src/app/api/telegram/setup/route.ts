@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: false, error: 'Telegram environment variables are not configured.' }, { status: 500 });
     }
 
-    const webhookUrl = 'https://moliora.us/api/telegram/webhook';
+    const webhookUrl = 'https://www.moliora.us/api/telegram/webhook';
     try {
         const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
             method: 'POST',
