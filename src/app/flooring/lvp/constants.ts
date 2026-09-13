@@ -1,3 +1,7 @@
+export const LVP_PHONE_DISPLAY = '(272) 277-0072';
+export const LVP_PHONE_E164 = '+12722770072';
+export const LVP_PHONE_HREF = 'tel:+12722770072';
+
 export const LVP_AREA_OPTIONS = [
     'Under 500 sq ft',
     '500–1,000 sq ft',
