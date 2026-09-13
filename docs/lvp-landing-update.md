@@ -1,0 +1,1 @@
+LVP landing page conversion/SEO update branch. Dedicated flooring phone: (272) 277-0072. Changes include paid-search-focused hero copy, active Flooring Designer CTA, supplier selection messaging, local SEO copy, FAQ structured data, and preserved lead attribution.
