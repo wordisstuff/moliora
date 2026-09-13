@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { phoneDisplay, phoneHref } from '@/config/company';
 import { flooringProducts } from '../catalog/catalogData';
+import { LVP_PHONE_DISPLAY, LVP_PHONE_HREF } from './constants';
 
 type ApiResponse = {
     success: boolean;
@@ -151,7 +151,7 @@ export default function LvpLeadForm() {
                 <p className="mt-5 text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Request received</p>
                 <h3 className="mt-2 text-3xl font-semibold">Thank you!</h3>
                 <p className="mt-4 max-w-xl leading-7 text-white/70">We received your flooring request and will review the project details. We’ll contact you about the next step.</p>
-                <a href={phoneHref} onClick={() => fireEvent('call_click', { placement: 'lvp_success' })} className="mt-6 inline-flex min-h-12 items-center justify-center border border-[#d6ad63]/60 px-5 text-sm font-semibold text-[#f0c978] hover:bg-[#d6ad63]/10">Call {phoneDisplay}</a>
+                <a href={LVP_PHONE_HREF} onClick={() => fireEvent('call_click', { placement: 'lvp_success' })} className="mt-6 inline-flex min-h-12 items-center justify-center border border-[#d6ad63]/60 px-5 text-sm font-semibold text-[#f0c978] hover:bg-[#d6ad63]/10">Call {LVP_PHONE_DISPLAY}</a>
             </div>
         );
     }
