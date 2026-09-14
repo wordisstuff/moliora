@@ -94,7 +94,7 @@ export default function LvpFlooringPage() {
 
                         <div className="mt-7 max-w-xl">
                             <LvpProjectEstimator />
-                            <a href="#flooring-estimate" className="mt-3 inline-flex min-h-12 w-full items-center justify-center border border-white/20 bg-black/25 px-6 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-[#d6ad63] hover:text-[#f0c978]">Request a Free Estimate</a>
+                            <a href="#flooring-estimate" className="mt-3 inline-flex min-h-12 w-full items-center justify-center border border-white/20 bg-black/25 px-6 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-[#d6ad63] hover:text-[#f0c978]">Request Estimate</a>
                         </div>
 
                         <div className="mt-8 grid max-w-3xl grid-cols-2 gap-x-5 gap-y-4 text-sm text-white/72 sm:grid-cols-4">
