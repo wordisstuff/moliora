@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import LvpLeadForm from './LvpLeadForm';
-import FlooringPlankFan from '@/components/FlooringPlankFan';
+import LvpProjectEstimator from './LvpProjectEstimator';
 
 const flooringPhoneDisplay = '(272) 277-0072';
 const flooringPhoneHref = 'tel:+12722770072';
@@ -8,12 +8,12 @@ const flooringPhoneHref = 'tel:+12722770072';
 export const metadata: Metadata = {
     title: 'LVP Flooring Installation in Minneapolis–St. Paul, MN | Moliora',
     description:
-        'Professional luxury vinyl plank (LVP) flooring installation in Ramsey, Anoka and the North Twin Cities. Removal, floor prep, trim and free estimates from Moliora.',
+        'Professional luxury vinyl plank (LVP) flooring installation in Ramsey, Anoka and the North Twin Cities. Plan your project, see an estimated range, and request a free estimate from Moliora.',
     alternates: { canonical: 'https://moliora.us/flooring/lvp' },
     openGraph: {
         title: 'Luxury Vinyl Plank Flooring Installation | Moliora',
         description:
-            'Professional LVP flooring installation, removal, floor preparation and trim in Ramsey, Anoka and the North Twin Cities.',
+            'Plan your LVP flooring project, see an estimated project range, and request professional installation in Ramsey, Anoka and the North Twin Cities.',
         url: 'https://moliora.us/flooring/lvp',
         type: 'website',
     },
@@ -21,25 +21,25 @@ export const metadata: Metadata = {
 
 const capabilities = [
     { title: 'LVP Installation', text: 'Click-lock luxury vinyl plank installation for residential spaces, finished cleanly around walls, doors and transitions.' },
-    { title: 'Old Flooring Removal', text: 'Removal of carpet, laminate or existing floating flooring can be included as a separate line item in your estimate.' },
+    { title: 'Old Flooring Removal', text: 'Removal of carpet, laminate or existing floating flooring can be included in the overall project scope.' },
     { title: 'Floor Prep & Leveling', text: 'We inspect the exposed subfloor and quote needed preparation, leveling or localized repairs before installation continues.' },
     { title: 'Baseboards & Transitions', text: 'Baseboards, quarter-round and transition pieces can be handled as part of the same flooring project.' },
     { title: 'Material Pickup & Delivery', text: 'If you want help sourcing or moving flooring and accessories, we can include procurement and delivery in the project scope.' },
 ];
 
 const steps = [
-    ['1', 'Choose your style', 'Start with the color, plank look and room feel you want.'],
-    ['2', 'Request a free estimate', 'Send the project size, current flooring and basic details.'],
+    ['1', 'Plan your project', 'Use the project planner to enter room size, existing flooring and project details.'],
+    ['2', 'See a planning range', 'Get one approximate project range based on the selections you make.'],
     ['3', 'Measure & inspect', 'We confirm measurements, access and the condition of the existing floor.'],
     ['4', 'Install & walkthrough', 'We complete the agreed scope and review the finished floor with you.'],
 ] as const;
 
 const faqs = [
     { q: 'Do you install LVP that I already purchased?', a: 'Yes. You can provide the flooring, or ask Moliora to help source and deliver material for the project.' },
-    { q: 'Can you remove my existing flooring?', a: 'Yes. Demolition and disposal can be included separately so you can see exactly what is part of the estimate.' },
+    { q: 'Can you remove my existing flooring?', a: 'Yes. Demolition and disposal can be included in the overall project scope and reflected in the project estimate.' },
     { q: 'What happens if the subfloor is damaged?', a: 'Hidden conditions cannot be fully evaluated before demolition. If we uncover leveling, moisture or subfloor repair needs, we document the condition and quote the additional work before proceeding in that area.' },
     { q: 'Do you install dark, black, gray and light LVP?', a: 'Yes. Available LVP lines include light, natural, gray, warm brown and very dark looks. We can help narrow the options based on your room and preferred style.' },
-    { q: 'How many LVP styles are available?', a: 'Availability changes by supplier and collection. For example, MSI currently lists 40 colors in its Prescott and XL Prescott collections, so the six preview planks on this page are only a small sample of what can be sourced.' },
+    { q: 'How many LVP styles are available?', a: 'Availability changes by supplier and collection. The preview colors on this page are only a small sample of what can be sourced.' },
     { q: 'Do you give estimates for small rooms and larger projects?', a: 'Yes. We review both smaller room projects and larger multi-room or whole-floor LVP installations in our service area.' },
 ];
 
@@ -78,27 +78,27 @@ export default function LvpFlooringPage() {
 
             <section className="relative isolate overflow-hidden border-b border-white/10 pt-20">
                 <div className="absolute inset-0 -z-30 bg-[url('/interior-construction.jpeg')] bg-cover bg-center" />
-                <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(8,9,9,.98)_0%,rgba(8,9,9,.92)_35%,rgba(8,9,9,.66)_62%,rgba(8,9,9,.44)_100%)]" />
-                <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(10,11,11,.08),rgba(10,11,11,.3)_55%,#0f1111_100%)]" />
+                <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(8,9,9,.98)_0%,rgba(8,9,9,.93)_42%,rgba(8,9,9,.77)_100%)]" />
+                <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(10,11,11,.08),rgba(10,11,11,.34)_55%,#0f1111_100%)]" />
 
-                <div className="relative mx-auto grid max-w-7xl gap-8 px-5 pb-10 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1.03fr_.97fr] lg:items-center lg:pb-14 lg:pt-24">
+                <div className="relative mx-auto grid max-w-7xl gap-8 px-5 pb-12 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1fr_1fr] lg:items-center lg:pb-16 lg:pt-24">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-[0.34em] text-[#e2bd72]">Moliora Flooring • Ramsey, Anoka & North Twin Cities</p>
                         <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-[1.02] sm:text-5xl lg:text-[4rem]">
-                            Luxury Vinyl Plank
-                            <span className="block text-[#e9c985]">Flooring Installation</span>
+                            Plan Your LVP Project
+                            <span className="block text-[#e9c985]">Before You Request a Quote</span>
                         </h1>
-                        <p className="mt-4 text-xl font-medium text-white/88">Professional LVP installation for Minnesota homes.</p>
-                        <p className="mt-4 max-w-2xl text-base leading-7 text-white/72 sm:text-lg sm:leading-8">Installation, old-floor removal, subfloor preparation, baseboards and transitions — with a clear estimate before work begins.</p>
+                        <p className="mt-4 text-xl font-medium text-white/88">Enter the details once. See an estimated project range in about two minutes.</p>
+                        <p className="mt-4 max-w-2xl text-base leading-7 text-white/72 sm:text-lg sm:leading-8">Room dimensions, existing flooring, removal, trim, transitions, stairs and material choices all help build one simple planning range — without exposing confusing line-item pricing.</p>
 
                         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                            <a href="#flooring-estimate" className="inline-flex min-h-13 items-center justify-center gap-2 bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black shadow-[0_12px_30px_rgba(214,173,99,.18)] transition hover:bg-[#f0c978]">Get a Free LVP Estimate <span aria-hidden="true">→</span></a>
-                            <a href="/flooring/design" className="inline-flex min-h-13 items-center justify-center border border-[#d6ad63]/55 bg-black/30 px-6 text-sm font-bold uppercase tracking-wider text-[#f0c978] backdrop-blur-sm transition hover:bg-[#d6ad63] hover:text-black">Open Flooring Designer</a>
+                            <a href="#lvp-project-planner" className="inline-flex min-h-13 items-center justify-center gap-2 bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black shadow-[0_12px_30px_rgba(214,173,99,.18)] transition hover:bg-[#f0c978]">Start Project Planner <span aria-hidden="true">↓</span></a>
+                            <a href="#flooring-estimate" className="inline-flex min-h-13 items-center justify-center border border-white/20 bg-black/25 px-6 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-[#d6ad63] hover:text-[#f0c978]">Quick Estimate Request</a>
                             <a href={flooringPhoneHref} className="inline-flex min-h-13 items-center justify-center border border-white/20 bg-black/25 px-6 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-[#d6ad63] hover:text-[#f0c978]">Call {flooringPhoneDisplay}</a>
                         </div>
 
                         <div className="mt-8 grid max-w-3xl grid-cols-2 gap-x-5 gap-y-4 text-sm text-white/72 sm:grid-cols-4">
-                            {['Free estimate request', 'Floor prep available', 'Local Minnesota service', 'Clear project scope'].map((item, index) => (
+                            {['2-minute planner', 'Instant range', 'No line-item prices', 'Exact quote follow-up'].map((item, index) => (
                                 <div key={item} className="flex items-center gap-3">
                                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d6ad63]/35 bg-[#d6ad63]/10 text-xs font-bold text-[#e9c985]">0{index + 1}</span>
                                     <span>{item}</span>
@@ -107,12 +107,14 @@ export default function LvpFlooringPage() {
                         </div>
                     </div>
 
-                    <div className="relative lg:translate-y-4">
-                        <FlooringPlankFan />
-                        <div className="mx-auto -mt-3 max-w-md rounded-xl border border-[#d6ad63]/25 bg-black/55 px-4 py-3 text-center backdrop-blur-sm">
-                            <p className="text-sm font-semibold text-[#f0c978]">Dozens of LVP looks are available — not just the six shown here.</p>
-                            <p className="mt-1 text-xs leading-5 text-white/55">MSI currently lists 40 colors in Prescott and 40 in XL Prescott. We can help you compare light, gray, brown and dark options.</p>
+                    <div id="lvp-project-planner" className="scroll-mt-28 rounded-3xl border border-[#d6ad63]/25 bg-black/60 p-4 shadow-2xl backdrop-blur-md sm:p-6">
+                        <div className="mb-4 px-1">
+                            <p className="text-xs font-bold uppercase tracking-[.28em] text-[#d6ad63]">Featured Tool</p>
+                            <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">Build your flooring project range</h2>
+                            <p className="mt-2 text-sm leading-6 text-white/55">Start here if you want a realistic planning number before talking with us.</p>
                         </div>
+                        <LvpProjectEstimator />
+                        <p className="mt-4 px-1 text-xs leading-5 text-white/40">This is a planning estimate, not a binding quote. Final pricing is confirmed after measurements, site conditions and product selection are reviewed.</p>
                     </div>
                 </div>
 
@@ -121,7 +123,7 @@ export default function LvpFlooringPage() {
                         <div>
                             <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Popular Floor Tones</p>
                             <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">Find the look that fits your home</h2>
-                            <p className="mt-3 max-w-md text-sm leading-6 text-white/55">The four tones below are only style examples. Product selection is much wider and changes by collection and supplier.</p>
+                            <p className="mt-3 max-w-md text-sm leading-6 text-white/55">The four tones below are style examples. Product selection is wider and changes by collection and supplier.</p>
                             <a href="/flooring/design" className="mt-5 inline-flex min-h-11 items-center justify-center border border-[#d6ad63]/50 px-5 text-xs font-bold uppercase tracking-wider text-[#f0c978] hover:bg-[#d6ad63] hover:text-black">Try the Flooring Designer</a>
                         </div>
                         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:mt-0 lg:grid-cols-4">
@@ -142,15 +144,15 @@ export default function LvpFlooringPage() {
                 <div className="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-6 lg:grid-cols-[1fr_.8fr] lg:items-center lg:py-20">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Moliora Flooring Designer</p>
-                        <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Preview flooring before you request an estimate</h2>
-                        <p className="mt-4 max-w-2xl leading-7 text-white/65">Use the flooring designer to explore the general direction, plank tone and room feel you like. Then send us your project details and we can help match the look to available LVP products.</p>
+                        <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Preview flooring after you plan the project</h2>
+                        <p className="mt-4 max-w-2xl leading-7 text-white/65">Use the flooring designer to explore the plank tone and room feel you like. Then we can help match that direction to available LVP products.</p>
                         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                             <a href="/flooring/design" className="inline-flex min-h-12 items-center justify-center bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black hover:bg-[#f0c978]">Open Flooring Designer</a>
-                            <a href="#flooring-estimate" className="inline-flex min-h-12 items-center justify-center border border-white/20 px-6 text-sm font-semibold hover:border-[#d6ad63] hover:text-[#f0c978]">Request an Estimate</a>
+                            <a href="#flooring-estimate" className="inline-flex min-h-12 items-center justify-center border border-white/20 px-6 text-sm font-semibold hover:border-[#d6ad63] hover:text-[#f0c978]">Quick Estimate Request</a>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                        {['Choose a room look', 'Compare floor tones', 'Pick a direction', 'Request an estimate'].map((item, index) => (
+                        {['Choose a room look', 'Compare floor tones', 'Pick a direction', 'Request an exact quote'].map((item, index) => (
                             <div key={item} className="border border-white/10 bg-black/20 p-5"><span className="text-[#d6ad63]">0{index + 1}</span><p className="mt-2 font-semibold">{item}</p></div>
                         ))}
                     </div>
@@ -183,15 +185,15 @@ export default function LvpFlooringPage() {
                     <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Serving Ramsey, Anoka and nearby Twin Cities communities</h2>
                     <div className="mt-6 space-y-4 text-white/65">
                         <p>Moliora provides residential luxury vinyl plank installation in Ramsey, Anoka, Andover, Coon Rapids, Blaine, Champlin and nearby North Twin Cities areas.</p>
-                        <p>Installation, demolition, floor preparation, trim and transitions are separated in the estimate so you can see the scope clearly.</p>
+                        <p>Your estimate reflects the overall project scope, including the options that apply to your installation.</p>
                         <p>If hidden subfloor conditions are uncovered after removal, the affected work is reviewed before additional repairs are performed.</p>
                     </div>
                 </div>
                 <div className="border border-white/10 bg-white/[0.03] p-6 sm:p-8">
-                    <h3 className="text-2xl font-semibold">Ready to price your floor?</h3>
-                    <p className="mt-3 leading-7 text-white/65">Send the approximate square footage and current flooring type. We can use that information to prepare the next step and schedule an on-site estimate when needed.</p>
+                    <h3 className="text-2xl font-semibold">Already know what you need?</h3>
+                    <p className="mt-3 leading-7 text-white/65">Skip the planner and send a quick estimate request with the approximate square footage and current flooring type.</p>
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                        <a href="#flooring-estimate" className="inline-flex min-h-12 items-center justify-center bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black hover:bg-[#f0c978]">Request Free Estimate</a>
+                        <a href="#flooring-estimate" className="inline-flex min-h-12 items-center justify-center bg-[#d6ad63] px-6 text-sm font-bold uppercase tracking-wider text-black hover:bg-[#f0c978]">Quick Estimate Request</a>
                         <a href={flooringPhoneHref} className="inline-flex min-h-12 items-center justify-center border border-white/20 px-6 text-sm font-semibold hover:border-[#d6ad63] hover:text-[#f0c978]">Call {flooringPhoneDisplay}</a>
                     </div>
                 </div>
@@ -209,9 +211,9 @@ export default function LvpFlooringPage() {
                 <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:py-24">
                     <div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr]">
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Free LVP Estimate Request</p>
-                            <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Tell us about your floor</h2>
-                            <p className="mt-4 max-w-lg leading-7 text-white/65">Approximate information is enough. We can confirm measurements, material choices and project details before final pricing.</p>
+                            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#d6ad63]">Quick LVP Estimate Request</p>
+                            <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Prefer the simple form?</h2>
+                            <p className="mt-4 max-w-lg leading-7 text-white/65">No problem. Send the basics here if you do not want to use the project planner. Approximate information is enough to start.</p>
                             <a href={flooringPhoneHref} className="mt-5 inline-flex text-sm font-semibold text-[#f0c978] hover:underline">Prefer to call? {flooringPhoneDisplay}</a>
                         </div>
                         <LvpLeadForm />
