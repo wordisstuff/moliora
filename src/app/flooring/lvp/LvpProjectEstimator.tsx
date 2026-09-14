@@ -11,7 +11,37 @@ export default function LvpProjectEstimator(){
  const [open,setOpen]=useState(false),[step,setStep]=useState(0),[contact,setContact]=useState(false),[sent,setSent]=useState(false),[pending,startTransition]=useTransition(),[error,setError]=useState('');
  const [mode,setMode]=useState<'dimensions'|'sqft'>('dimensions'),[length,setLength]=useState(''),[width,setWidth]=useState(''),[sqft,setSqft]=useState(''),[location,setLocation]=useState('');
  const [floor,setFloor]=useState<ExistingFloor>('carpet'),[remove,setRemove]=useState(true),[trim,setTrim]=useState<Trim>('keep'),[doors,setDoors]=useState(1),[stairs,setStairs]=useState(0),[subfloor,setSubfloor]=useState<Subfloor>('unsure'),[material,setMaterial]=useState<Material>('have');
- useEffect(()=>{document.body.style.overflow=open?'hidden':'';return()=>{document.body.style.overflow=''}},[open]);
+ useEffect(()=>{
+   document.body.style.overflow=open?'hidden':'';
+   const hidden=new Map<HTMLElement,string>();
+   const hideRoomvo=()=>{
+     if(!open)return;
+     const selectors='iframe[src*="roomvo.com"], [id*="roomvo" i], [class*="roomvo" i], [id*="ffPopup" i], [class*="ffPopup" i], iframe[name*="ffPopup" i]';
+     document.querySelectorAll<HTMLElement>(selectors).forEach(el=>{
+       let target=el;
+       let parent=el.parentElement;
+       while(parent&&parent!==document.body){
+         const position=getComputedStyle(parent).position;
+         if(position==='fixed'||position==='sticky'){target=parent;break;}
+         parent=parent.parentElement;
+       }
+       if(!hidden.has(target)){
+         hidden.set(target,target.style.cssText);
+         target.style.setProperty('display','none','important');
+         target.style.setProperty('visibility','hidden','important');
+         target.style.setProperty('pointer-events','none','important');
+       }
+     });
+   };
+   hideRoomvo();
+   const observer=open?new MutationObserver(hideRoomvo):null;
+   if(observer)observer.observe(document.body,{childList:true,subtree:true});
+   return()=>{
+     document.body.style.overflow='';
+     observer?.disconnect();
+     hidden.forEach((style,el)=>{el.style.cssText=style;});
+   };
+ },[open]);
  const estimate=useMemo(()=>{const l=Number(length),w=Number(width),area=mode==='dimensions'?l*w:Number(sqft);if(!area||area<=0)return null;const perimeter=mode==='dimensions'?2*(l+w):4.5*Math.sqrt(area);let total=area*3.25;if(remove)total+=area*({none:0,carpet:1,floating:1.25,hardwood:2.5,tile:4}[floor]);total+=perimeter*({keep:0,reinstall:2,new:4.75,shoe:2.75}[trim])+doors*65+stairs*150;if(subfloor==='minor')total+=area*.5;if(subfloor==='unsure')total+=area*.25;total+=area*1.1*({have:0,value:2.5,premium:4,heavy:6}[material]);total=Math.max(total,700);return{sqft:Math.round(area),perimeter:Math.round(perimeter),low:r100(total*.92),high:r100(total*(subfloor==='unsure'?1.2:1.15))}},[length,width,sqft,mode,floor,remove,trim,doors,stairs,subfloor,material]);
  const floorName={none:'Bare subfloor',carpet:'Carpet',floating:'LVP / laminate',hardwood:'Hardwood',tile:'Tile'}[floor]; const trimName={keep:'Keep existing trim',reinstall:'Remove & reinstall',new:'New baseboards',shoe:'Shoe / quarter-round'}[trim]; const materialName={have:'Customer has flooring',value:'Value LVP',premium:'Premium LVP',heavy:'Heavy-duty / premium LVP'}[material];
  const canNext=step===0?!!estimate:step===1?!!location.trim():true;
@@ -29,7 +59,7 @@ export default function LvpProjectEstimator(){
      {step===3&&<div><h3 className="text-3xl font-semibold">Room details</h3><p className="mt-2 text-white/55">We use the room perimeter for trim and doorways as estimated transitions.</p><div className="mt-6 grid gap-2 sm:grid-cols-2">{([['keep','Keep existing trim'],['reinstall','Remove & reinstall'],['new','Install new baseboards'],['shoe','Add shoe / quarter-round']] as const).map(([v,n])=><button key={v} onClick={()=>setTrim(v)} className={choice(trim===v)}>{n}</button>)}</div><div className="mt-5 grid grid-cols-2 gap-3"><label className="text-sm">Doorways / transitions<input value={doors} onChange={e=>setDoors(Math.max(0,+e.target.value))} type="number" min="0" className={`${field} mt-2`}/></label><label className="text-sm">LVP-covered stairs<input value={stairs} onChange={e=>setStairs(Math.max(0,+e.target.value))} type="number" min="0" className={`${field} mt-2`}/></label></div><p className="mt-3 text-sm text-[#e9c985]">{doors} estimated transition{doors===1?'':'s'} · {estimate?.perimeter||0} ft trim perimeter</p></div>}
      {step===4&&<div><h3 className="text-3xl font-semibold">Floor condition & material</h3><p className="mt-5 text-sm font-semibold">Subfloor condition</p><div className="mt-2 grid gap-2 sm:grid-cols-3">{([['good','Looks good'],['minor','Minor issues'],['unsure','Not sure']] as const).map(([v,n])=><button key={v} onClick={()=>setSubfloor(v)} className={choice(subfloor===v)}>{n}</button>)}</div><p className="mt-6 text-sm font-semibold">New LVP material</p><div className="mt-2 grid gap-2 sm:grid-cols-2">{([['have','I already have flooring'],['value','Help source — Value'],['premium','Help source — Premium'],['heavy','Help source — Heavy-duty']] as const).map(([v,n])=><button key={v} onClick={()=>setMaterial(v)} className={choice(material===v)}>{n}</button>)}</div></div>}
      {step===5&&estimate&&<div className="text-center"><p className="text-xs font-bold uppercase tracking-[.28em] text-[#d6ad63]">Estimated project range</p><p className="mt-4 text-4xl font-semibold text-[#f0c978] sm:text-5xl">{money(estimate.low)} – {money(estimate.high)}</p><p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/50">Preliminary planning range based on your selections. Final pricing is confirmed after measurements, product selection and site conditions are reviewed.</p>{!contact?<button onClick={()=>setContact(true)} className="mt-7 rounded-xl bg-[#d6ad63] px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-black">Request My Exact Quote</button>:<form onSubmit={e=>{e.preventDefault();submit(e.currentTarget)}} className="mt-7 text-left"><p className="mb-4 text-center text-sm text-white/55">Your project details are already attached. Just tell us how to reach you.</p><div className="grid gap-3 sm:grid-cols-3"><input name="name" required className={field} placeholder="Name"/><input name="phone" required type="tel" className={field} placeholder="Phone"/><input name="email" required type="email" className={field} placeholder="Email"/></div><label className="mt-4 flex gap-3 text-sm text-white/55"><input name="consent" value="true" required type="checkbox" className="accent-[#d6ad63]"/>I agree that Moliora may contact me about this flooring request.</label>{error&&<p className="mt-3 text-sm text-red-200">{error}</p>}<button disabled={pending} className="mt-5 w-full rounded-xl bg-[#d6ad63] px-6 py-3.5 font-bold text-black disabled:opacity-50">{pending?'Sending…':'Submit Quote Request'}</button></form>}</div>}
-     {!contact&&<div className="mt-8 flex items-center justify-between border-t border-white/10 pt-5"><button disabled={step===0} onClick={()=>setStep(s=>Math.max(0,s-1))} className="px-4 py-3 text-sm text-white/60 disabled:opacity-20">← Back</button>{step<5&&<button disabled={!canNext} onClick={()=>setStep(s=>Math.min(5,s+1))} className="rounded-xl bg-[#d6ad63] px-7 py-3 text-sm font-bold text-black disabled:opacity-30">Continue →</button>}</div>}
+     {!contact&&<div className="sticky bottom-0 z-10 -mx-5 mt-8 flex items-center justify-between border-t border-white/10 bg-[#111313]/95 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur sm:-mx-8 sm:px-8"><button disabled={step===0} onClick={()=>setStep(s=>Math.max(0,s-1))} className="px-4 py-3 text-sm text-white/60 disabled:opacity-20">← Back</button>{step<5&&<button disabled={!canNext} onClick={()=>setStep(s=>Math.min(5,s+1))} className="rounded-xl bg-[#d6ad63] px-7 py-3 text-sm font-bold text-black disabled:opacity-30">Continue →</button>}</div>}
     </>}
    </div>
   </div></div>}
