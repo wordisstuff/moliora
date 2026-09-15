@@ -78,9 +78,9 @@ export default function LvpFlooringPage() {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
             <section className="relative isolate overflow-hidden border-b border-white/10 pt-20">
-                <div className="absolute inset-0 -z-30 bg-[url('/interior-construction.jpeg')] bg-cover bg-center" />
-                <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(8,9,9,.98)_0%,rgba(8,9,9,.92)_35%,rgba(8,9,9,.66)_62%,rgba(8,9,9,.44)_100%)]" />
-                <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(10,11,11,.08),rgba(10,11,11,.3)_55%,#0f1111_100%)]" />
+                <div className="absolute inset-0 -z-30 bg-[url('/lvp2.PNG')] bg-cover bg-center brightness-105" />
+                <div className="absolute inset-0 -z-20 bg-[linear-gradient(90deg,rgba(8,9,9,.82)_0%,rgba(8,9,9,.72)_35%,rgba(8,9,9,.38)_62%,rgba(8,9,9,.16)_100%)]" />
+                <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(10,11,11,.03),rgba(10,11,11,.16)_55%,#0f1111_100%)]" />
 
                 <div className="relative mx-auto grid max-w-7xl gap-8 px-5 pb-10 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1.03fr_.97fr] lg:items-center lg:pb-14 lg:pt-24">
                     <div>
