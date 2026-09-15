@@ -40,6 +40,12 @@ img {
   max-width: 100%;
 }
 
+/* LVP landing-page hero: keep the room bright, with just enough darkening for readable copy. */
+div[class*="interior-construction.jpeg"] {
+  background-image: url('/lvp.PNG') !important;
+  filter: brightness(0.9);
+}
+
 /* Links */
 a {
   text-decoration: none;
