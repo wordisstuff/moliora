@@ -46,6 +46,42 @@ div[class*="interior-construction.jpeg"] {
   filter: brightness(0.9);
 }
 
+/* LVP project planner: the whole card remains the click target, while the
+   bright inner CTA makes the intended next action immediately obvious. */
+main button.group.w-full.rounded-2xl {
+  overflow: hidden;
+}
+
+main button.group.w-full.rounded-2xl::after {
+  content: "Request Estimate  →";
+  display: flex;
+  min-height: 52px;
+  margin-top: 18px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(190, 255, 91, 0.78);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #c9ff63 0%, #a9ee4d 100%);
+  box-shadow: 0 8px 24px rgba(174, 238, 76, 0.18);
+  color: #14200b;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+main button.group.w-full.rounded-2xl:hover::after,
+main button.group.w-full.rounded-2xl:focus-visible::after {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #d7ff86 0%, #b7f45c 100%);
+  box-shadow: 0 10px 30px rgba(174, 238, 76, 0.3);
+}
+
+main button.group.w-full.rounded-2xl:focus-visible {
+  outline: 2px solid #c9ff63;
+  outline-offset: 3px;
+}
+
 /* Links */
 a {
   text-decoration: none;
