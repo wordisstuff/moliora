@@ -33,7 +33,7 @@ export default function LvpProjectEstimator({standalone=false}:{standalone?:bool
 ');const payload={name:String(d.get('name')||''),phone:String(d.get('phone')||''),email:String(d.get('email')||''),location,service:'LVP Flooring',approximateArea:`${estimate.sqft} sq ft`,existingFlooring:floorName,demolition:remove?'Yes':'No',materialSupply:material==='have'?'I already have flooring':`Need Moliora — ${materialName}`,message,consent,website:'',leadSource:'LVP Project Calculator',landingPage:window.location.pathname+window.location.search};startTransition(async()=>{try{const res=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),json=await res.json();if(!res.ok||!json.success){setError(json.error||'Could not submit request.');return}
       if(typeof window!=='undefined'){
         const w=window as typeof window & {gtag?: (...args: unknown[])=>void};
-        w.gtag?.('event','lead_submit',{lead_source:'LVP Project Calculator',service:'LVP Flooring'});
+        w.gtag?.('event', 'lead_submit', { lead_source: 'LVP Project Calculator', service: 'LVP Flooring' });
       }
       setSent(true)}catch{setError('Unexpected error. Please try again.')}})}
   const labels=['Space','Location','Floor','Details','Materials','Estimate'] as const;
