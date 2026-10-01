@@ -2,9 +2,7 @@ import type { Metadata } from 'next';
 import LvpLeadForm from './LvpLeadForm';
 import LvpProjectEstimator from './LvpProjectEstimator';
 import FlooringPlankFan from '@/components/FlooringPlankFan';
-
-const flooringPhoneDisplay = '(272) 277-0072';
-const flooringPhoneHref = 'tel:+12722770072';
+import { phoneDisplay as flooringPhoneDisplay, phoneHref as flooringPhoneHref, phoneE164 } from '@/config/company';
 
 export const metadata: Metadata = {
     title: 'LVP Flooring Installation in Minneapolis–St. Paul, MN | Moliora',
@@ -117,7 +115,7 @@ export default function LvpFlooringPage() {
             'Minneapolis–St. Paul, Minnesota',
         ],
         url: 'https://moliora.us/flooring/lvp',
-        telephone: '+12722770072',
+        telephone: phoneE164,
     };
     const faqJsonLd = {
         '@context': 'https://schema.org',
