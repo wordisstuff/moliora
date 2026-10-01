@@ -71,3 +71,30 @@ export async function googleAdsSearch(query: string) {
   }
   return data;
 }
+
+
+export function googleAdsCustomerId() {
+  return env('GOOGLE_ADS_CUSTOMER_ID').replace(/-/g, '');
+}
+
+export async function googleAdsMutate(servicePath: string, body: Record<string, unknown>) {
+  const customerId = googleAdsCustomerId();
+  const token = await accessToken();
+  const response = await fetch(
+    `https://googleads.googleapis.com/${ADS_API_VERSION}/customers/${customerId}/${servicePath}:mutate`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    },
+  );
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(`Google Ads mutate failed (${response.status}): ${JSON.stringify(data)}`);
+  }
+  return data;
+}
