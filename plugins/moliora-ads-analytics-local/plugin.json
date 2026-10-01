@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "moliora-ads-analytics-local",
+  "version": "0.1.0",
+  "description": "Local ChatGPT Desktop plugin for Moliora Google Ads, GA4, GTM and tracking diagnostics.",
+  "author": {
+    "name": "Moliora"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Moliora Ads & Analytics (Local)",
+        "shortDescription": "Ads, GA4, GTM & tracking audit",
+        "longDescription": "Local ChatGPT Desktop plugin that connects to Moliora's MCP endpoint for Google Ads, GA4, Google Tag Manager and website tracking diagnostics.",
+        "developerName": "Moliora",
+        "category": "Productivity",
+        "capabilities": ["Interactive"],
+        "defaultPrompt": "Перевір Moliora Google Ads, GA4, GTM і tracking setup та покажи, що потрібно виправити."
+      }
+    }
+  }
+}
