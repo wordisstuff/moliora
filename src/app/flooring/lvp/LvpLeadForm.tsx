@@ -11,7 +11,6 @@ export default function LvpLeadForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const plannerCompleteTracked = useRef(false);
-  const plannerLeadTracked = useRef(false);
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -30,7 +29,6 @@ export default function LvpLeadForm() {
 
       if (text.includes('Plan Your Project & Request a Quote')) {
         plannerCompleteTracked.current = false;
-        plannerLeadTracked.current = false;
         trackEvent('planner_open', { source: 'lvp_hero' });
         return;
       }
@@ -58,23 +56,11 @@ export default function LvpLeadForm() {
       }
     };
 
-    const observer = new MutationObserver(() => {
-      if (plannerLeadTracked.current) return;
-      const dialogs = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"]'));
-      const successDialog = dialogs.find(dialog => dialog.textContent?.includes('We have your project.'));
-      if (!successDialog) return;
-
-      plannerLeadTracked.current = true;
-      trackEvent('lead_submit', { lead_type: 'planner', source: 'lvp_project_planner' });
-      trackEvent('planner_lead_submit', { source: 'lvp_project_planner' });
-    });
 
     document.addEventListener('click', onClick, true);
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
     return () => {
       document.removeEventListener('click', onClick, true);
-      observer.disconnect();
     };
   }, []);
 
