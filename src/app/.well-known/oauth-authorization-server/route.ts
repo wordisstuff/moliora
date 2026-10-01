@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   return NextResponse.json({
     issuer: OAUTH_ISSUER,
+    authorization_response_iss_parameter_supported: true,
     authorization_endpoint: `${OAUTH_ISSUER}/oauth/authorize`,
     token_endpoint: `${OAUTH_ISSUER}/oauth/token`,
     client_id_metadata_document_supported: true,
