@@ -35,6 +35,7 @@ const tools=[
 {name:'add_campaign_sitelink',description:'Create a sitelink asset and associate it with a live campaign. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['campaign_resource_name','link_text','final_url'],properties:{campaign_resource_name:{type:'string'},link_text:{type:'string',minLength:1,maxLength:25},final_url:{type:'string',minLength:8,maxLength:2048},description1:{type:'string',maxLength:35},description2:{type:'string',maxLength:35}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
 {name:'add_campaign_callout',description:'Create a callout asset and associate it with a live campaign. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['campaign_resource_name','callout_text'],properties:{campaign_resource_name:{type:'string'},callout_text:{type:'string',minLength:1,maxLength:25}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
 {name:'remove_campaign_asset_association',description:'Remove one campaign-level asset association using its campaign_asset resource name. The underlying reusable asset is left intact. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['campaign_asset_resource_name'],properties:{campaign_asset_resource_name:{type:'string'}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
+{name:'update_responsive_search_ad',description:'Replace the full headline and description sets of an existing Responsive Search Ad. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['ad_resource_name','headlines','descriptions'],properties:{ad_resource_name:{type:'string',minLength:10,maxLength:200},headlines:{type:'array',minItems:3,maxItems:15,items:{type:'string',minLength:1,maxLength:30}},descriptions:{type:'array',minItems:2,maxItems:4,items:{type:'string',minLength:1,maxLength:90}}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
 {name:'set_keyword_cpc',description:'CHANGE a keyword max CPC bid. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['criterion_resource_name','cpc_dollars'],properties:{criterion_resource_name:{type:'string'},cpc_dollars:{type:'number',minimum:0.01,maximum:100}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
 {name:'set_keyword_status',description:'ENABLE or PAUSE a live keyword. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['criterion_resource_name','status'],properties:{criterion_resource_name:{type:'string'},status:{type:'string',enum:['ENABLED','PAUSED']}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
 {name:'add_campaign_negative_keyword',description:'Add a negative keyword to a live campaign. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['campaign_resource_name','text','match_type'],properties:{campaign_resource_name:{type:'string'},text:{type:'string',minLength:1,maxLength:80},match_type:{type:'string',enum:['BROAD','PHRASE','EXACT']}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
@@ -121,6 +122,19 @@ async function callTool(name:string,args?:Record<string,unknown>){
    const rn=str(args,'campaign_asset_resource_name');
    return result(await googleAdsMutate('campaignAssets',{operations:[{remove:rn}]}),{changed:true});
  }
+ case 'update_responsive_search_ad':{
+   const rn=str(args,'ad_resource_name');
+   if(!/^customers\/[^/]+\/ads\/[^/]+$/.test(rn))throw new Error('Invalid ad_resource_name');
+   const headlinesRaw=args?.headlines;
+   const descriptionsRaw=args?.descriptions;
+   if(!Array.isArray(headlinesRaw)||headlinesRaw.length<3||headlinesRaw.length>15||!headlinesRaw.every(x=>typeof x==='string'&&x.trim()&&x.trim().length<=30))throw new Error('headlines must contain 3-15 non-empty strings, each at most 30 characters');
+   if(!Array.isArray(descriptionsRaw)||descriptionsRaw.length<2||descriptionsRaw.length>4||!descriptionsRaw.every(x=>typeof x==='string'&&x.trim()&&x.trim().length<=90))throw new Error('descriptions must contain 2-4 non-empty strings, each at most 90 characters');
+   const headlines=(headlinesRaw as string[]).map(x=>x.trim());
+   const descriptions=(descriptionsRaw as string[]).map(x=>x.trim());
+   if(new Set(headlines.map(x=>x.toLowerCase())).size!==headlines.length)throw new Error('headlines must be unique');
+   if(new Set(descriptions.map(x=>x.toLowerCase())).size!==descriptions.length)throw new Error('descriptions must be unique');
+   return result(await googleAdsMutate('ads',{operations:[{update:{resourceName:rn,responsiveSearchAd:{headlines:headlines.map(text=>({text})),descriptions:descriptions.map(text=>({text}))}},updateMask:'responsiveSearchAd.headlines,responsiveSearchAd.descriptions'}]}),{changed:true});
+ }
  case 'set_keyword_cpc':{const rn=str(args,'criterion_resource_name'),micros=Math.round(dollars(args,'cpc_dollars')*1e6);return result(await googleAdsMutate('adGroupCriteria',{operations:[{update:{resourceName:rn,cpcBidMicros:String(micros)},updateMask:'cpcBidMicros'}]}),{changed:true});}
  case 'set_keyword_status':{const rn=str(args,'criterion_resource_name'),status=str(args,'status');if(!['ENABLED','PAUSED'].includes(status))throw new Error('Invalid status');return result(await googleAdsMutate('adGroupCriteria',{operations:[{update:{resourceName:rn,status},updateMask:'status'}]}),{changed:true});}
  case 'add_campaign_negative_keyword':{const campaign=str(args,'campaign_resource_name'),text=str(args,'text'),matchType=str(args,'match_type');if(!['BROAD','PHRASE','EXACT'].includes(matchType))throw new Error('Invalid match_type');return result(await googleAdsMutate('campaignCriteria',{operations:[{create:{campaign,negative:true,keyword:{text,matchType}}}]}),{changed:true});}
@@ -133,7 +147,7 @@ async function callTool(name:string,args?:Record<string,unknown>){
 export async function OPTIONS(){return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'authorization, content-type, mcp-protocol-version'}});}
 export async function POST(request:Request){
  let body:RpcRequest;try{body=await request.json();}catch{return rpcError(null,-32700,'Parse error');}
- if(body.method==='initialize')return rpc(body.id,{protocolVersion,capabilities:{tools:{listChanged:false}},serverInfo:{name:'moliora-google-ads',version:'0.5.0'}});
+ if(body.method==='initialize')return rpc(body.id,{protocolVersion,capabilities:{tools:{listChanged:false}},serverInfo:{name:'moliora-google-ads',version:'0.6.0'}});
  if(body.method==='notifications/initialized')return new Response(null,{status:202});
  if(body.method==='ping')return rpc(body.id,{});
  if(body.method==='tools/list')return rpc(body.id,{tools});
