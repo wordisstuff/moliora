@@ -25,7 +25,9 @@ const faqs = [
 export default function LvpEstimatePage() {
   return (
     <main className="min-h-screen bg-[#0f1111] text-white">
-      <section className="border-b border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(214,173,99,.12),transparent_36%)] px-5 pb-10 pt-24 sm:px-6 sm:pt-28">
+      <section className="relative isolate overflow-hidden border-b border-white/10 px-5 pb-10 pt-24 sm:px-6 sm:pt-28">
+        <div className="absolute inset-0 -z-20 bg-[url('/lvp2.PNG')] bg-cover bg-[position:70%_center] sm:bg-[position:88%_center]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(8,9,9,.92)_0%,rgba(8,9,9,.84)_42%,rgba(8,9,9,.58)_70%,rgba(8,9,9,.45)_100%)]" />
         <div className="mx-auto max-w-5xl">
           <Link href="/flooring/lvp" className="text-sm text-white/50 transition hover:text-[#f0c978]">← Back to LVP Flooring</Link>
 
