@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "moliora-ads-analytics": {
+      "type": "http",
+      "url": "https://www.moliora.us/mcp"
+    }
+  }
+}
