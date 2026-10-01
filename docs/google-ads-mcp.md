@@ -45,3 +45,15 @@ The service account must have read access to the GTM account/container.
 - `audit_tracking_setup` cross-checks Google Ads conversion actions, GA4 key events, GTM configuration, and delivered site tracking markers in one call.
 
 HTML inspection is intentionally not described as a live browser trace. Runtime confirmation should use GA4 realtime plus browser/GTM preview testing when needed.
+
+
+## Campaign asset management
+
+The MCP also exposes campaign-level asset tools:
+
+- `get_campaign_assets` — list campaign asset associations and resource names
+- `add_campaign_sitelink` — create and attach a sitelink to a campaign
+- `add_campaign_callout` — create and attach a callout to a campaign
+- `remove_campaign_asset_association` — detach a campaign asset association without deleting the reusable asset
+
+All write tools modify live Google Ads and should be used only after explicit user approval.
