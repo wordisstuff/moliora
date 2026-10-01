@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { exchangeAuthorizationCode, MCP_RESOURCE, validChatGPTClient, validRedirectUri } from '@/lib/mcpOAuth';
+import { canonicalResource, exchangeAuthorizationCode, MCP_RESOURCE, validChatGPTClient, validRedirectUri } from '@/lib/mcpOAuth';
 export const runtime = 'nodejs';
 export async function POST(request: Request) {
   const form = await request.formData();
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const redirectUri = String(form.get('redirect_uri') || '');
   const resource = String(form.get('resource') || MCP_RESOURCE);
   if (grantType !== 'authorization_code' || !code || !verifier || !validChatGPTClient(clientId) ||
-      !validRedirectUri(redirectUri) || resource !== MCP_RESOURCE) {
+      !validRedirectUri(redirectUri, clientId) || canonicalResource(resource) !== MCP_RESOURCE) {
     return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
   }
   const token = exchangeAuthorizationCode(code, verifier, clientId, redirectUri, resource);
