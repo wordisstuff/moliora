@@ -18,9 +18,13 @@ export function canonicalResource(value:string){return value.replace(/\/+$/,'');
 export function validChatGPTClient(clientId:string){
  try{const u=new URL(clientId);return u.protocol==='https:'&&u.hostname==='chatgpt.com'&&u.pathname.startsWith('/oauth/')&&u.pathname.endsWith('/client.json')&&!u.search&&!u.hash;}catch{return false;}
 }
-export function validRedirectUri(uri:string){
- try{const u=new URL(uri);if(u.protocol!=='https:'||u.hostname!=='chatgpt.com'||u.search||u.hash)return false;
- return u.pathname==='/connector_platform_oauth_redirect'||u.pathname.startsWith('/connector/oauth/');
+export function validRedirectUri(uri:string, clientId = ''){
+ try{
+  const u=new URL(uri);
+  if(u.search||u.hash)return false;
+  if(u.protocol==='https:'&&u.hostname==='chatgpt.com') return u.pathname==='/connector_platform_oauth_redirect'||u.pathname.startsWith('/connector/oauth/');
+  const isCodexClient=clientId==='https://chatgpt.com/oauth/codex/client.json';
+  return isCodexClient&&u.protocol==='http:'&&u.hostname==='127.0.0.1'&&/^\\d+$/.test(u.port)&&u.pathname==='/callback';
  }catch{return false;}
 }
 export function issueAuthorizationCode(input:{clientId:string;redirectUri:string;codeChallenge:string;resource:string;scope:string}){return sign({typ:'code',...input,exp:Math.floor(Date.now()/1000)+300});}
