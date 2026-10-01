@@ -1,0 +1,20 @@
+{
+  "name": "moliora-local",
+  "interface": {
+    "displayName": "Moliora Local"
+  },
+  "plugins": [
+    {
+      "name": "moliora-ads-analytics-local",
+      "source": {
+        "source": "local",
+        "path": "./plugins/moliora-ads-analytics-local"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
