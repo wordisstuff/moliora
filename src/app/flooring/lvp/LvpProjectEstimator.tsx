@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
+import { trackEvent } from '@/lib/analytics';
 
 type ExistingFloor='none'|'carpet'|'floating'|'hardwood'|'tile'; type Trim='keep'|'reinstall'|'new'|'shoe'; type Material='have'|'value'|'premium'|'heavy'; type Subfloor='good'|'minor'|'unsure';
 const field='min-h-12 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#d6ad63]';
@@ -30,10 +31,8 @@ export default function LvpProjectEstimator({standalone=false}:{standalone?:bool
  const floorName={none:'Bare subfloor',carpet:'Carpet',floating:'LVP / laminate',hardwood:'Hardwood',tile:'Tile'}[floor]; const trimName={keep:'Keep existing trim',reinstall:'Remove & reinstall',new:'New baseboards',shoe:'Shoe / quarter-round'}[trim]; const materialName={have:'Customer has flooring',value:'Value LVP',premium:'Premium LVP',heavy:'Heavy-duty / premium LVP'}[material];
  const canNext=step===0?!!estimate:step===1?!!location.trim():true;
  async function submit(form:HTMLFormElement){if(!estimate)return;if(!consent){setConsentError(true);return;}setConsentError(false);setError('');const d=new FormData(form),range=`${money(estimate.low)}–${money(estimate.high)}`,dimensions=mode==='dimensions'?`${length} × ${width} ft`:`${estimate.sqft} sq ft`;const message=[`LVP PROJECT CALCULATOR — customer requested exact quote`,`Calculator range shown: ${range}`,`Size: ${dimensions} (${estimate.sqft} sq ft)`,`Trim perimeter: ${estimate.perimeter} linear ft`,`Existing flooring: ${floorName}`,`Removal: ${remove?'Yes':'No'}`,`Trim: ${trimName}`,`Doorways / estimated transitions: ${doors}`,`Stairs: ${stairs}`,`Subfloor: ${subfloor}`,`Material: ${materialName}`].join('\n');const payload={name:String(d.get('name')||''),phone:String(d.get('phone')||''),email:String(d.get('email')||''),location,service:'LVP Flooring',approximateArea:`${estimate.sqft} sq ft`,existingFlooring:floorName,demolition:remove?'Yes':'No',materialSupply:material==='have'?'I already have flooring':`Need Moliora — ${materialName}`,message,consent,website:'',leadSource:'LVP Project Calculator',landingPage:window.location.pathname+window.location.search};startTransition(async()=>{try{const res=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),json=await res.json();if(!res.ok||!json.success){setError(json.error||'Could not submit request.');return}
-      if(typeof window!=='undefined'){
-        const w=window as typeof window & {gtag?: (...args: unknown[])=>void};
-        w.gtag?.('event', 'lead_submit', { lead_source: 'LVP Project Calculator', service: 'LVP Flooring' });
-      }
+      trackEvent('lead_submit', { lead_type: 'planner', source: 'lvp_project_planner' });
+      trackEvent('planner_lead_submit', { source: 'lvp_project_planner' });
       setSent(true)}catch{setError('Unexpected error. Please try again.')}})}
   const labels=['Space','Location','Floor','Details','Materials','Estimate'] as const;
  return <>
