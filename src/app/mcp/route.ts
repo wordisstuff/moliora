@@ -31,6 +31,10 @@ const tools=[
 {name:'get_gtm_snapshot',description:'Read the configured Google Tag Manager container/workspace tags, triggers and variables.',inputSchema:{type:'object',properties:{},additionalProperties:false},securitySchemes:oauth,annotations:readAnnotations},
 {name:'inspect_tracking_page',description:'Inspect delivered Moliora page HTML for GA4/GTM/Google Ads IDs and common tracking markers. This is not a live browser execution trace.',inputSchema:{type:'object',properties:{path:{type:'string',default:'/',maxLength:500}},additionalProperties:false},securitySchemes:oauth,annotations:readAnnotations},
 {name:'audit_tracking_setup',description:'Cross-check Google Ads conversion actions, GA4 key events, GTM configuration and site tracking markers in one read-only diagnostic call.',inputSchema:{type:'object',properties:{path:{type:'string',default:'/',maxLength:500}},additionalProperties:false},securitySchemes:oauth,annotations:readAnnotations},
+{name:'get_campaign_assets',description:'List campaign-level Google Ads asset associations, including sitelinks, callouts, call assets, images, business names and logos with resource names needed for edits.',inputSchema:{type:'object',properties:{},additionalProperties:false},securitySchemes:oauth,annotations:readAnnotations},
+{name:'add_campaign_sitelink',description:'Create a sitelink asset and associate it with a live campaign. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['campaign_resource_name','link_text','final_url'],properties:{campaign_resource_name:{type:'string'},link_text:{type:'string',minLength:1,maxLength:25},final_url:{type:'string',minLength:8,maxLength:2048},description1:{type:'string',maxLength:35},description2:{type:'string',maxLength:35}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
+{name:'add_campaign_callout',description:'Create a callout asset and associate it with a live campaign. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['campaign_resource_name','callout_text'],properties:{campaign_resource_name:{type:'string'},callout_text:{type:'string',minLength:1,maxLength:25}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
+{name:'remove_campaign_asset_association',description:'Remove one campaign-level asset association using its campaign_asset resource name. The underlying reusable asset is left intact. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['campaign_asset_resource_name'],properties:{campaign_asset_resource_name:{type:'string'}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
 {name:'set_keyword_cpc',description:'CHANGE a keyword max CPC bid. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['criterion_resource_name','cpc_dollars'],properties:{criterion_resource_name:{type:'string'},cpc_dollars:{type:'number',minimum:0.01,maximum:100}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
 {name:'set_keyword_status',description:'ENABLE or PAUSE a live keyword. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['criterion_resource_name','status'],properties:{criterion_resource_name:{type:'string'},status:{type:'string',enum:['ENABLED','PAUSED']}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
 {name:'add_campaign_negative_keyword',description:'Add a negative keyword to a live campaign. This modifies live Google Ads and should require user approval.',inputSchema:{type:'object',required:['campaign_resource_name','text','match_type'],properties:{campaign_resource_name:{type:'string'},text:{type:'string',minLength:1,maxLength:80},match_type:{type:'string',enum:['BROAD','PHRASE','EXACT']}},additionalProperties:false},securitySchemes:oauth,annotations:writeAnnotations},
@@ -79,6 +83,7 @@ async function callTool(name:string,args?:Record<string,unknown>){
  case 'get_ga4_key_events':return result(await ga4ListKeyEvents());
  case 'get_gtm_snapshot':return result(await gtmSnapshot());
  case 'inspect_tracking_page':return result(await inspectTrackingPage(typeof args?.path==='string'?args.path:'/'));
+ case 'get_campaign_assets':query='SELECT campaign.resource_name, campaign.name, campaign_asset.resource_name, campaign_asset.field_type, campaign_asset.status, asset.resource_name, asset.id, asset.name, asset.type, asset.sitelink_asset.link_text, asset.sitelink_asset.description1, asset.sitelink_asset.description2, asset.final_urls, asset.callout_asset.callout_text, asset.call_asset.country_code, asset.call_asset.phone_number FROM campaign_asset ORDER BY campaign.name, campaign_asset.field_type';break;
  case 'audit_tracking_setup':{
    const path=typeof args?.path==='string'?args.path:'/';
    const [ads,ga4,gtm,site]=await Promise.all([
@@ -88,6 +93,33 @@ async function callTool(name:string,args?:Record<string,unknown>){
      safe(()=>inspectTrackingPage(path)),
    ]);
    return result({googleAdsConversions:ads,ga4KeyEvents:ga4,gtm,site});
+ }
+ case 'add_campaign_sitelink':{
+   const campaign=str(args,'campaign_resource_name');
+   const linkText=str(args,'link_text');
+   const finalUrl=str(args,'final_url');
+   if(!/^https?:\/\//i.test(finalUrl))throw new Error('final_url must start with http:// or https://');
+   const sitelink:Record<string,unknown>={linkText};
+   if(typeof args?.description1==='string'&&args.description1.trim())sitelink.description1=args.description1.trim();
+   if(typeof args?.description2==='string'&&args.description2.trim())sitelink.description2=args.description2.trim();
+   const created=await googleAdsMutate('assets',{operations:[{create:{sitelinkAsset:sitelink,finalUrls:[finalUrl]}}]}) as {results?:Array<{resourceName?:string}>};
+   const asset=created.results?.[0]?.resourceName;
+   if(!asset)throw new Error('Google Ads did not return the created sitelink asset resource name');
+   const associated=await googleAdsMutate('campaignAssets',{operations:[{create:{campaign,asset,fieldType:'SITELINK'}}]});
+   return result({createdAsset:asset,association:associated},{changed:true});
+ }
+ case 'add_campaign_callout':{
+   const campaign=str(args,'campaign_resource_name');
+   const calloutText=str(args,'callout_text');
+   const created=await googleAdsMutate('assets',{operations:[{create:{calloutAsset:{calloutText}}}]}) as {results?:Array<{resourceName?:string}>};
+   const asset=created.results?.[0]?.resourceName;
+   if(!asset)throw new Error('Google Ads did not return the created callout asset resource name');
+   const associated=await googleAdsMutate('campaignAssets',{operations:[{create:{campaign,asset,fieldType:'CALLOUT'}}]});
+   return result({createdAsset:asset,association:associated},{changed:true});
+ }
+ case 'remove_campaign_asset_association':{
+   const rn=str(args,'campaign_asset_resource_name');
+   return result(await googleAdsMutate('campaignAssets',{operations:[{remove:rn}]}),{changed:true});
  }
  case 'set_keyword_cpc':{const rn=str(args,'criterion_resource_name'),micros=Math.round(dollars(args,'cpc_dollars')*1e6);return result(await googleAdsMutate('adGroupCriteria',{operations:[{update:{resourceName:rn,cpcBidMicros:String(micros)},updateMask:'cpcBidMicros'}]}),{changed:true});}
  case 'set_keyword_status':{const rn=str(args,'criterion_resource_name'),status=str(args,'status');if(!['ENABLED','PAUSED'].includes(status))throw new Error('Invalid status');return result(await googleAdsMutate('adGroupCriteria',{operations:[{update:{resourceName:rn,status},updateMask:'status'}]}),{changed:true});}
@@ -101,7 +133,7 @@ async function callTool(name:string,args?:Record<string,unknown>){
 export async function OPTIONS(){return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'authorization, content-type, mcp-protocol-version'}});}
 export async function POST(request:Request){
  let body:RpcRequest;try{body=await request.json();}catch{return rpcError(null,-32700,'Parse error');}
- if(body.method==='initialize')return rpc(body.id,{protocolVersion,capabilities:{tools:{listChanged:false}},serverInfo:{name:'moliora-google-ads',version:'0.4.0'}});
+ if(body.method==='initialize')return rpc(body.id,{protocolVersion,capabilities:{tools:{listChanged:false}},serverInfo:{name:'moliora-google-ads',version:'0.5.0'}});
  if(body.method==='notifications/initialized')return new Response(null,{status:202});
  if(body.method==='ping')return rpc(body.id,{});
  if(body.method==='tools/list')return rpc(body.id,{tools});
