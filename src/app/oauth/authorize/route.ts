@@ -16,7 +16,7 @@ function read(url: URL): Params | null {
     scope: url.searchParams.get('scope') || MCP_SCOPE,
   };
   if (url.searchParams.get('response_type') !== 'code' || url.searchParams.get('code_challenge_method') !== 'S256') return null;
-  if (!validChatGPTClient(p.clientId) || !validRedirectUri(p.redirectUri) || canonicalResource(p.resource) !== MCP_RESOURCE || !p.challenge) return null;
+  if (!validChatGPTClient(p.clientId) || !validRedirectUri(p.redirectUri, p.clientId) || canonicalResource(p.resource) !== MCP_RESOURCE || !p.challenge) return null;
   return p;
 }
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     state:String(form.get('state')||''), challenge:String(form.get('challenge')||''),
     resource:String(form.get('resource')||''), scope:String(form.get('scope')||MCP_SCOPE),
   };
-  if (!validChatGPTClient(p.clientId) || !validRedirectUri(p.redirectUri) || canonicalResource(p.resource) !== MCP_RESOURCE || !p.challenge) return new Response('Invalid OAuth request', { status:400 });
+  if (!validChatGPTClient(p.clientId) || !validRedirectUri(p.redirectUri, p.clientId) || canonicalResource(p.resource) !== MCP_RESOURCE || !p.challenge) return new Response('Invalid OAuth request', { status:400 });
   const supplied = String(form.get('secret') || '');
   if (!constantTimeSecretEquals(supplied)) return page(p, 'Incorrect secret.');
   const code = issueAuthorizationCode({ clientId:p.clientId, redirectUri:p.redirectUri, codeChallenge:p.challenge, resource:p.resource, scope:p.scope });
