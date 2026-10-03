@@ -9,7 +9,7 @@
     "defaultPrompt": "Перевір Moliora Google Ads, GA4, GTM і tracking setup та покажи, що потрібно виправити."
   },
   "name": "moliora-ads-analytics-local",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local ChatGPT Desktop plugin for Moliora Google Ads, GA4, GTM and tracking diagnostics.",
   "author": {"name": "Moliora"},
   "mcpServers": "./.mcp.json"
