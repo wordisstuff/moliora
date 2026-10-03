@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "moliora-ads-analytics-local",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local ChatGPT Desktop plugin for Moliora Google Ads, GA4, GTM and tracking diagnostics.",
   "author": {
     "name": "Moliora"
